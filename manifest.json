@@ -1,12 +1,18 @@
 {
-  "name": "Focus Five",
-  "short_name": "Tasks",
+  "name": "FocusFive",
+  "short_name": "FocusFive",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#faf9f6",
-  "theme_color": "#faf9f6",
+  "background_color": "#F7F2E7",
+  "theme_color": "#F7F2E7",
   "icons": [
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
@@ -25,5 +31,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "description": "Log Pose task triage: voice-dump your brain, see only your top 5."
 }
