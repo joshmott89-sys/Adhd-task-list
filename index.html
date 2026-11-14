@@ -3,381 +3,559 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-180.png">
-  <title>FocusFive — Calm Voice-First Top-5 Tasks</title>
-  <meta name="theme-color" content="#faf9f6" />
+  <title>FOCUS FIVE — Log Pose Task Triage</title>
+
+  <!-- PWA Manifest & Icons -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#F7F2E7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="FocusFive" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Oswald (Bold Condensed Display) & Atkinson Hyperlegible (High-Clarity Body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Oswald:wght@600;700&display=swap" rel="stylesheet" />
+
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['Oswald', 'Impact', 'sans-serif'],
+            sans: ['Atkinson Hyperlegible', 'Inter', 'system-ui', 'sans-serif'],
           },
           colors: {
-            cream: '#FAF9F6',
-            ink: '#1E293B',
-            calmIndigo: '#4F46E5',
-            celebrate: '#10B981',
-          },
-          boxShadow: {
-            soft: '0 4px 20px -2px rgba(30, 41, 59, 0.05)',
-            glow: '0 10px 30px -5px rgba(79, 70, 229, 0.35)',
+            parchment: '#F7F2E7',
+            parchmentCard: '#FFFDF9',
+            seaInk: '#111827',
+            seaCard: '#1E293B',
+            crimsonFlag: '#D92D20',
+            saffronGold: '#EAB308',
+            charcoalInk: '#1C1917',
           }
         }
       }
     };
   </script>
+
   <style>
-    /* Base calm surface and smooth transitions */
+    /* ==========================================================================
+       GRAND LINE TACTILE — NAUTICAL CARTOGRAPHY & MANGA INK STYLES
+       ========================================================================== */
+    :root {
+      --bg-canvas: #F7F2E7;
+      --grid-ink: rgba(28, 25, 23, 0.045);
+      --border-ink: #1C1917;
+      --shadow-ink: #1C1917;
+    }
+
+    html.dark {
+      --bg-canvas: #111827;
+      --grid-ink: rgba(247, 242, 231, 0.04);
+      --border-ink: #E5E0D5;
+      --shadow-ink: #030712;
+    }
+
     body {
-      background-color: #FAF9F6;
-      color: #1E293B;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-canvas);
+      /* Subtle nautical chart coordinate grid + compass rhumb lines */
+      background-image:
+        linear-gradient(to right, var(--grid-ink) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-ink) 1px, transparent 1px),
+        radial-gradient(circle at 85% 15%, rgba(234, 179, 8, 0.07) 0%, transparent 45%);
+      background-size: 36px 36px, 36px 36px, 100% 100%;
+      color: #1C1917;
+      font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
       -webkit-tap-highlight-color: transparent;
       overflow-x: hidden;
     }
 
     html.dark body {
-      background-color: #0F172A;
-      color: #F1F5F9;
+      color: #F7F2E7;
     }
 
-    /* Gentle breathing pulse for the primary microphone button */
-    @keyframes calmPulse {
-      0%, 100% {
-        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.32), 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+    /* Bold Manga-Panel Border & Hard Tactile Offset Shadow */
+    .manga-panel {
+      border: 2.5px solid var(--border-ink);
+      box-shadow: 3px 3px 0px var(--shadow-ink);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.2s ease;
+    }
+
+    .manga-panel-sm {
+      border: 2px solid var(--border-ink);
+      box-shadow: 2px 2px 0px var(--shadow-ink);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .manga-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px var(--shadow-ink);
+    }
+
+    /* Tier 1 Critical Task: Thick 6px Crimson Flag Left Bar */
+    .tier-critical {
+      border-left: 7px solid #D92D20 !important;
+    }
+
+    /* Tier 2 Aged 5+ Days Stagnation: Warm Amber Parchment Tint */
+    .tier-aged {
+      background-color: #FEF3C7 !important;
+    }
+    html.dark .tier-aged {
+      background-color: #3B230A !important;
+    }
+
+    /* Heavy Crimson Ink-Stamp ("CLEARED / DON!!") Slam Animation */
+    @keyframes stampSlam {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2.1) rotate(-18deg);
       }
-      50% {
-        box-shadow: 0 0 0 12px rgba(79, 70, 229, 0), 0 10px 25px -5px rgba(79, 70, 229, 0.45);
+      65% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.94) rotate(-6deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) rotate(-7deg);
       }
     }
 
-    @keyframes listeningPulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.45);
-      }
-      50% {
-        transform: scale(1.06);
-        box-shadow: 0 0 0 18px rgba(225, 29, 72, 0);
-      }
+    .cleared-ink-stamp {
+      position: absolute;
+      top: 50%;
+      left: 52%;
+      transform: translate(-50%, -50%) rotate(-7deg);
+      border: 3.5px solid #D92D20;
+      color: #D92D20;
+      background-color: rgba(255, 253, 249, 0.94);
+      padding: 2px 14px;
+      border-radius: 6px;
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 20;
+      box-shadow: 2px 2px 0px rgba(217, 45, 32, 0.25);
+      animation: stampSlam 0.24s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
     }
 
-    .mic-idle {
-      animation: calmPulse 3.6s infinite ease-in-out;
+    html.dark .cleared-ink-stamp {
+      background-color: rgba(17, 24, 39, 0.95);
     }
 
-    .mic-listening {
-      animation: listeningPulse 1.3s infinite ease-in-out;
-      background-color: #E11D48 !important;
+    /* Manga "DON!!" Micro-Shake Impact */
+    @keyframes donImpactShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-4px, 2px); }
+      40% { transform: translate(4px, -2px); }
+      60% { transform: translate(-3px, -1px); }
+      80% { transform: translate(2px, 1px); }
     }
 
-    /* Smooth card entry and completion animations */
-    @keyframes cardSlideIn {
+    .don-shake {
+      animation: donImpactShake 0.24s ease-out;
+    }
+
+    /* Card Entrance & Exit */
+    @keyframes cardDrawIn {
       from {
         opacity: 0;
-        transform: translateY(12px) scale(0.985);
+        transform: translateY(10px);
       }
       to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
       }
     }
 
     .task-card-enter {
-      animation: cardSlideIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: cardDrawIn 0.26s ease-out forwards;
     }
 
-    .task-card-completing {
-      transform: scale(0.97);
+    .task-card-exit {
       opacity: 0;
-      transition: transform 0.38s ease, opacity 0.38s ease;
+      transform: translateX(18px);
+      transition: opacity 0.28s ease, transform 0.28s ease;
     }
 
-    /* Strikethrough line animation */
-    .strike-text {
-      position: relative;
-      display: inline;
-    }
-    .strike-text::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 52%;
-      width: 0%;
-      height: 2px;
-      background-color: #10B981;
-      transition: width 0.28s ease-out;
-    }
-    .is-done .strike-text::after {
-      width: 100%;
+    /* Pulsing Brass & Crimson Ring for Center Voice Dump CTA */
+    @keyframes voiceBeaconIdle {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.55), 3px 3px 0px var(--shadow-ink);
+      }
+      50% {
+        box-shadow: 0 0 0 9px rgba(234, 179, 8, 0), 3px 3px 0px var(--shadow-ink);
+      }
     }
 
-    /* Animated audio waveform bars for continuous listening card */
-    @keyframes waveBounce {
+    @keyframes voiceBeaconActive {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(217, 45, 32, 0.65), 3px 3px 0px var(--shadow-ink);
+      }
+      50% {
+        box-shadow: 0 0 0 14px rgba(217, 45, 32, 0), 3px 3px 0px var(--shadow-ink);
+      }
+    }
+
+    .voice-cta-idle {
+      animation: voiceBeaconIdle 3s infinite ease-in-out;
+    }
+
+    .voice-cta-listening {
+      animation: voiceBeaconActive 1.1s infinite ease-in-out;
+      background-color: #B91C1C !important;
+    }
+
+    /* Live Nautical Audio Waveform Bars */
+    @keyframes nauticalWave {
       0%, 100% { height: 6px; }
-      50% { height: 22px; }
+      50% { height: 24px; }
     }
-    .wave-bar {
-      width: 3px;
-      border-radius: 9999px;
-      background-color: #E11D48;
-      animation: waveBounce 0.9s ease-in-out infinite;
-    }
-    .wave-bar:nth-child(2) { animation-delay: 0.15s; }
-    .wave-bar:nth-child(3) { animation-delay: 0.30s; }
-    .wave-bar:nth-child(4) { animation-delay: 0.12s; }
-    .wave-bar:nth-child(5) { animation-delay: 0.28s; }
 
-    /* Hide scrollbars cleanly where needed */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
+    .nautical-bar {
+      width: 4px;
+      border-radius: 2px;
+      background-color: #D92D20;
+      animation: nauticalWave 0.85s ease-in-out infinite;
     }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+    .nautical-bar:nth-child(2) { animation-delay: 0.14s; background-color: #EAB308; }
+    .nautical-bar:nth-child(3) { animation-delay: 0.28s; }
+    .nautical-bar:nth-child(4) { animation-delay: 0.10s; background-color: #EAB308; }
+    .nautical-bar:nth-child(5) { animation-delay: 0.24s; }
+
+    /* Log Pose Magnetic Needle Gentle Wobble & Lock */
+    @keyframes needleLockWobble {
+      0%, 100% { transform: rotate(-28deg); }
+      35% { transform: rotate(-22deg); }
+      70% { transform: rotate(-31deg); }
+    }
+
+    @keyframes needleSeekSpin {
+      0% { transform: rotate(-28deg); }
+      60% { transform: rotate(348deg); }
+      100% { transform: rotate(332deg); }
+    }
+
+    .log-pose-needle {
+      transform-origin: 50px 50px;
+      animation: needleLockWobble 4.5s ease-in-out infinite;
+    }
+
+    .log-pose-needle.seeking {
+      animation: needleSeekSpin 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between transition-colors duration-300 selection:bg-indigo-100 selection:text-indigo-900">
 
-  <!-- Confetti Canvas Overlay (non-blocking) -->
-  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+<body id="app-body" class="min-h-screen flex flex-col justify-between transition-colors duration-200 selection:bg-amber-200 selection:text-stone-900">
 
-  <!-- TOP NAVIGATION BAR -->
-  <header class="w-full max-w-2xl mx-auto px-4 pt-5 pb-2 flex items-center justify-between gap-2">
-    <!-- Brand Identity -->
+  <!-- ========================================================================
+       CLEAN TOP NAVIGATION HEADER (Log Pose Brand, Weekly Arc, Theme, Gear)
+       ======================================================================== -->
+  <header class="w-full max-w-2xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between gap-2 relative z-30">
+    <!-- Custom Inline SVG Log Pose Emblem + Bold Oswald Title -->
     <div class="flex items-center gap-2.5">
-      <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
-        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9"></circle>
-          <path d="M9 12l2 2 4-4"></path>
+      <div class="w-10 h-10 rounded-xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel-sm flex items-center justify-center shrink-0">
+        <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <!-- Brass Compass Outer Ring -->
+          <circle cx="32" cy="32" r="26" fill="#F7F2E7" stroke="#1C1917" stroke-width="4" />
+          <circle cx="32" cy="32" r="21" stroke="#EAB308" stroke-width="3" />
+          <!-- Cardinal Ticks -->
+          <line x1="32" y1="6" x2="32" y2="12" stroke="#1C1917" stroke-width="3" stroke-linecap="round" />
+          <line x1="32" y1="52" x2="32" y2="58" stroke="#1C1917" stroke-width="3" stroke-linecap="round" />
+          <line x1="6" y1="32" x2="12" y2="32" stroke="#1C1917" stroke-width="3" stroke-linecap="round" />
+          <line x1="52" y1="32" x2="58" y2="32" stroke="#1C1917" stroke-width="3" stroke-linecap="round" />
+          <!-- Locked Crimson & Ink Compass Needle -->
+          <polygon points="32,12 37,32 27,32" fill="#D92D20" stroke="#1C1917" stroke-width="1.5" stroke-linejoin="round" />
+          <polygon points="32,52 37,32 27,32" fill="#1C1917" />
+          <circle cx="32" cy="32" r="4" fill="#EAB308" stroke="#1C1917" stroke-width="2" />
         </svg>
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">FocusFive</h1>
-          <span id="sim-day-badge" class="hidden text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-            +0d
+          <h1 class="font-display text-2xl font-bold tracking-wide uppercase text-charcoalInk dark:text-parchment leading-none">
+            FOCUS FIVE
+          </h1>
+          <span id="sim-day-badge" class="hidden font-display text-xs font-bold uppercase px-2 py-0.5 rounded bg-amber-300 text-charcoalInk border border-charcoalInk">
+            +0D
           </span>
         </div>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400 mt-0.5">
+          Log Pose Triage
+        </p>
       </div>
     </div>
 
-    <!-- Compact Header Controls -->
-    <div class="flex items-center gap-1.5 sm:gap-2">
-      <!-- Hour of Power Mode Toggle -->
-      <button
-        id="toggle-hop-btn"
-        type="button"
-        title="Enter Hour of Power: one 5-minute task at a time"
-        class="px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/70 text-amber-800 dark:text-amber-200 hover:bg-amber-100/80 dark:hover:bg-amber-900/50 transition flex items-center gap-1.5 shadow-2xs"
-      >
-        <span>⚡</span>
-        <span id="hop-btn-label">Hour of Power</span>
-      </button>
-
-      <!-- Time Simulation Pill Toggle -->
-      <button
-        id="toggle-time-sim-btn"
-        type="button"
-        title="Simulate time passing to test 5-day task aging"
-        class="px-2.5 py-2 rounded-xl text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-500 transition flex items-center gap-1.5 shadow-2xs"
-      >
-        <svg class="w-3.5 h-3.5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
-        <span class="hidden sm:inline">Time Sim</span>
-      </button>
-
-      <!-- Weekly Wins Celebration Button -->
+    <!-- Right Header Controls: Weekly Arc Gauge Button, Day/Night Toggle, Hidden Gear Popover -->
+    <div class="flex items-center gap-2">
+      <!-- Weekly Arc Celebration Button with Live Saffron Gold Progress Gauge -->
       <button
         id="open-wins-btn"
         type="button"
-        class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/70 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 transition flex items-center gap-1.5"
+        title="View Weekly Arc Wins"
+        class="manga-panel-sm manga-btn px-3 py-1.5 rounded-xl bg-[#FFFDF9] dark:bg-slate-800 flex items-center gap-2 text-left"
       >
-        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-          <path d="M4 22h16"></path>
-          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-        </svg>
-        <span>Weekly Wins</span>
-        <span id="wins-count-pill" class="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[11px] font-bold">0</span>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment">
+              Weekly Arc
+            </span>
+            <span id="wins-count-pill" class="font-display text-xs font-bold px-1.5 py-0.2 rounded bg-saffronGold text-charcoalInk border border-charcoalInk">
+              0
+            </span>
+          </div>
+          <!-- Mini Saffron Gold Arc Progress Bar -->
+          <div class="w-20 h-1.5 bg-stone-200 dark:bg-slate-700 rounded-full overflow-hidden mt-1 border border-charcoalInk/40">
+            <div id="header-arc-bar" class="h-full bg-saffronGold transition-all duration-300" style="width: 30%;"></div>
+          </div>
+        </div>
       </button>
 
-      <!-- Calm Dark/Light Toggle -->
+      <!-- Day Parchment / Deep Sea Ink Night Toggle -->
       <button
         id="theme-toggle-btn"
         type="button"
-        aria-label="Toggle dark mode"
-        class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition"
+        aria-label="Toggle Parchment or Deep Sea Ink theme"
+        title="Switch Parchment / Deep Sea Ink"
+        class="manga-panel-sm manga-btn w-10 h-10 rounded-xl bg-[#FFFDF9] dark:bg-slate-800 flex items-center justify-center text-charcoalInk dark:text-parchment"
       >
         <!-- Sun Icon (shown in dark mode) -->
-        <svg id="icon-sun" class="w-4 h-4 hidden dark:block text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="w-5 h-5 hidden dark:block text-saffronGold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="4"></circle>
           <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
         </svg>
         <!-- Moon Icon (shown in light mode) -->
-        <svg id="icon-moon" class="w-4 h-4 block dark:hidden text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="w-5 h-5 block dark:hidden text-charcoalInk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
         </svg>
       </button>
+
+      <!-- Subtle Settings Popover Trigger (Houses Time Sim & Demo Reset out of main UI) -->
+      <div class="relative">
+        <button
+          id="gear-menu-btn"
+          type="button"
+          aria-label="Settings and Time Simulator"
+          title="Settings & 5-Day Stagnation Clock"
+          class="manga-panel-sm manga-btn w-10 h-10 rounded-xl bg-[#FFFDF9] dark:bg-slate-800 flex items-center justify-center text-charcoalInk dark:text-parchment"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+
+        <!-- Hidden Simulator & Demo Controls Popover -->
+        <div
+          id="gear-popover"
+          class="hidden absolute right-0 mt-2 w-72 rounded-2xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel p-4 z-50"
+        >
+          <div class="flex items-center justify-between pb-2 mb-2.5 border-b-2 border-stone-200 dark:border-slate-700">
+            <span class="font-display text-sm font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment">
+              5-Day Stagnation Clock
+            </span>
+            <button id="close-gear-btn" type="button" class="text-xs font-bold text-stone-500 hover:text-charcoalInk dark:hover:text-white px-1.5 py-0.5">
+              ✕
+            </button>
+          </div>
+          <p class="text-xs text-stone-600 dark:text-slate-300 leading-relaxed mb-3">
+            Tasks untouched for 5 days auto-escalate into your Top 5 as <span class="font-bold text-amber-700 dark:text-amber-300">DRIFTING 5D</span> so nothing gets lost at sea.
+          </p>
+          <div class="grid grid-cols-2 gap-2 mb-2.5">
+            <button
+              id="sim-plus-1d"
+              type="button"
+              class="manga-panel-sm manga-btn py-2 px-3 rounded-xl bg-parchment dark:bg-slate-700 font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment"
+            >
+              +1 Day Drift
+            </button>
+            <button
+              id="sim-plus-5d"
+              type="button"
+              class="manga-panel-sm manga-btn py-2 px-3 rounded-xl bg-saffronGold font-display text-xs font-bold uppercase tracking-wider text-charcoalInk"
+            >
+              +5 Days Drift
+            </button>
+          </div>
+          <button
+            id="sim-reset-btn"
+            type="button"
+            class="w-full manga-panel-sm manga-btn py-2 px-3 rounded-xl bg-stone-200 dark:bg-slate-900 font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-slate-200"
+          >
+            Reset Demo Tasks
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- COLLAPSIBLE TIME SIMULATION BAR (For testing 5-day anti-stagnation escalation) -->
-  <div id="time-sim-drawer" class="hidden w-full max-w-2xl mx-auto px-4 pt-1 pb-2">
-    <div class="rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 p-3 flex flex-wrap items-center justify-between gap-2 shadow-soft">
-      <div class="text-xs text-slate-600 dark:text-slate-300">
-        <span class="font-semibold text-slate-800 dark:text-slate-100">Anti-Stagnation Clock:</span>
-        Tasks untouched for 5 days auto-escalate into your Top 5.
-      </div>
-      <div class="flex items-center gap-1.5">
-        <button id="sim-plus-1d" type="button" class="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition">
-          +1 Day
-        </button>
-        <button id="sim-plus-5d" type="button" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-2xs">
-          +5 Days
-        </button>
-        <button id="sim-reset-btn" type="button" class="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
-          Reset Demo
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- ========================================================================
+       MAIN CONTENT STAGE (Strict Top-5 Cards OR Single-Card Log Pose Mode)
+       ======================================================================== -->
+  <main id="main-stage" class="flex-1 w-full max-w-2xl mx-auto px-4 pt-2 pb-36 flex flex-col">
 
-  <!-- MAIN CONTENT STAGE -->
-  <main class="flex-1 w-full max-w-2xl mx-auto px-4 pt-3 pb-44 flex flex-col">
-
-    <!-- Gentle Front-of-Mind Reminder Banner (Non-punitive nudge for aged or timed tasks) -->
-    <div id="reminder-banner" class="hidden mb-4 rounded-2xl bg-indigo-50/90 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/70 px-4 py-3 flex items-start justify-between gap-3 transition-all">
+    <!-- Front-of-Mind Nudge Banner (Appears only for 5d Drifting or Imminent Timed Tasks) -->
+    <div
+      id="reminder-banner"
+      class="hidden mb-3.5 rounded-2xl bg-amber-100 dark:bg-amber-950/90 manga-panel-sm px-4 py-3 flex items-start justify-between gap-3"
+    >
       <div class="flex items-start gap-2.5">
-        <span class="mt-0.5 w-6 h-6 rounded-lg bg-indigo-600/10 dark:bg-indigo-400/15 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shrink-0">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
+        <span class="mt-0.5 px-1.5 py-0.5 rounded bg-crimsonFlag text-white font-display text-[11px] font-bold uppercase tracking-wider shrink-0">
+          HEADS UP
         </span>
         <div>
-          <p id="reminder-banner-title" class="text-xs font-semibold text-indigo-950 dark:text-indigo-100">Front-of-mind check-in</p>
-          <p id="reminder-banner-body" class="text-xs text-indigo-800/85 dark:text-indigo-200/80 mt-0.5 leading-relaxed"></p>
+          <p id="reminder-banner-title" class="font-display text-sm font-bold uppercase tracking-wide text-charcoalInk dark:text-amber-100">
+            Front-of-mind check-in
+          </p>
+          <p id="reminder-banner-body" class="text-xs font-bold text-stone-700 dark:text-amber-200/90 mt-0.5 leading-snug"></p>
         </div>
       </div>
-      <button id="dismiss-reminder-btn" type="button" aria-label="Dismiss reminder" class="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition shrink-0">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+      <button
+        id="dismiss-reminder-btn"
+        type="button"
+        aria-label="Dismiss reminder"
+        class="p-1 rounded-lg text-charcoalInk dark:text-amber-200 hover:bg-amber-200/70 dark:hover:bg-amber-900 font-bold text-sm shrink-0"
+      >
+        ✕
       </button>
     </div>
 
-    <!-- Calm Reassurance Header (STRICTLY NO BACKLOG COUNTER) -->
-    <div id="top-five-subheader" class="mb-3.5 flex items-center justify-between px-1">
-      <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
-        Your top 5 right now. Everything else is safely held.
-      </p>
-      <span id="ai-status-pill" class="hidden text-[11px] font-medium text-indigo-600 dark:text-indigo-300 flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-ping"></span>
-        Organizing...
+    <!-- Calm Reassurance Subheader (Strictly NO Backlog Count) -->
+    <div id="top-five-subheader" class="mb-3 flex items-center justify-between px-0.5">
+      <span class="font-display text-xs font-bold uppercase tracking-widest text-stone-600 dark:text-slate-400">
+        CURRENT TOP 5 TARGETS • REST HELD SAFELY
+      </span>
+      <span id="ai-status-pill" class="hidden font-display text-xs font-bold uppercase tracking-wider text-crimsonFlag flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-crimsonFlag animate-ping"></span>
+        CHARTING...
       </span>
     </div>
 
-    <!-- TOP-5 ACTIVE TASK LIST (Never renders more than 5 items) -->
+    <!-- ======================================================================
+         TOP-5 ACTIVE TASK LIST (Clean 2-Line Cards, Zero Numeric Score Badges)
+         ====================================================================== -->
     <ul id="top-five-list" class="space-y-3" aria-label="Top 5 focus tasks">
-      <!-- Task cards injected dynamically -->
+      <!-- Cards rendered dynamically -->
     </ul>
 
-    <!-- HOUR OF POWER SINGLE-TASK SPRINT VIEW (Hidden unless active) -->
-    <section id="hop-stage" class="hidden flex-1 flex flex-col justify-center my-auto py-2" aria-label="Hour of Power single task sprint">
-      <!-- Top Session Bar: 60-Min Session Timer + Running Session Wins Tally -->
-      <div class="mb-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-amber-200/80 dark:border-amber-800/60 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-soft">
+    <!-- ======================================================================
+         LOG POSE MODE (HOUR OF POWER — ONE <=5 MIN TARGET AT A TIME)
+         ====================================================================== -->
+    <section id="hop-stage" class="hidden flex-1 flex flex-col justify-center my-auto py-1" aria-label="Log Pose 5-Minute Sprint Mode">
+
+      <!-- Top Session Strip: 60:00 Session Clock + Arc Wins Counter -->
+      <div class="mb-4 rounded-2xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel px-4 py-3 flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold text-base">
-            ⚡
-          </div>
-          <div>
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">Hour of Power Session</p>
-            <div class="flex items-center gap-2 mt-0.5">
-              <span id="hop-session-clock" class="text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">60:00</span>
-              <button
-                id="hop-timer-toggle-btn"
-                type="button"
-                class="px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition"
-              >
-                Start
-              </button>
-              <button
-                id="hop-timer-reset-btn"
-                type="button"
-                class="px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
-              >
-                Reset
-              </button>
-            </div>
+          <span class="px-2 py-1 rounded-lg bg-crimsonFlag text-white font-display text-xs font-bold uppercase tracking-wider">
+            LOG POSE
+          </span>
+          <div class="flex items-center gap-2">
+            <span id="hop-session-clock" class="font-display text-2xl font-bold tabular-nums text-charcoalInk dark:text-parchment leading-none">
+              60:00
+            </span>
+            <button
+              id="hop-timer-toggle-btn"
+              type="button"
+              class="manga-panel-sm manga-btn px-2.5 py-1 rounded-lg bg-saffronGold font-display text-xs font-bold uppercase tracking-wider text-charcoalInk"
+            >
+              START
+            </button>
+            <button
+              id="hop-timer-reset-btn"
+              type="button"
+              class="manga-panel-sm manga-btn px-2 py-1 rounded-lg bg-parchment dark:bg-slate-700 font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment"
+            >
+              RESET
+            </button>
           </div>
         </div>
 
-        <!-- Running Session Wins Tally (Zero queue count shown) -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800/60">
-          <span class="text-xs font-medium text-emerald-800 dark:text-emerald-200">Session Wins</span>
-          <span id="hop-session-wins" class="text-base font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">0</span>
+        <!-- Session Arc Wins (Zero remaining-queue counter) -->
+        <div class="flex items-center gap-2 px-3 py-1 rounded-xl bg-amber-100 dark:bg-amber-950/70 border-2 border-charcoalInk dark:border-amber-500/60">
+          <span class="font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-amber-200">
+            ARC WINS
+          </span>
+          <span id="hop-session-wins" class="font-display text-xl font-bold text-crimsonFlag dark:text-saffronGold tabular-nums leading-none">
+            0
+          </span>
         </div>
       </div>
 
-      <!-- Focused Single Micro-Task Card -->
-      <div id="hop-active-card" class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 p-6 sm:p-7 shadow-soft transition-all">
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <span id="hop-task-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
-            Quick Win • ~5m
-          </span>
+      <!-- WANTED / BOUNTY-STYLE SINGLE TARGET CARD -->
+      <div
+        id="hop-active-card"
+        class="relative rounded-3xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel p-6 sm:p-7 overflow-hidden"
+      >
+        <!-- Top Bounty Header + Animated Brass-and-Crimson Compass Ring -->
+        <div class="flex items-center justify-between gap-3 pb-4 mb-5 border-b-2 border-dashed border-stone-300 dark:border-slate-600">
+          <div>
+            <span class="font-display text-xs font-bold uppercase tracking-[0.2em] text-crimsonFlag block">
+              LOCKED TARGET • 5-MIN SPRINT
+            </span>
+            <span class="font-display text-lg font-bold uppercase tracking-wide text-charcoalInk dark:text-parchment">
+              ONE ISLAND AT A TIME
+            </span>
+          </div>
 
-          <!-- Optional 5-Minute Micro-Task Sprint Progress Ring -->
+          <!-- Animated Brass & Crimson Compass Needle Ring + 5-Min Sprint Timer -->
           <button
             id="hop-sprint-ring-btn"
             type="button"
             title="Tap to start or reset 5-minute sprint timer"
-            class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-700 hover:border-amber-300 transition"
+            class="manga-panel-sm manga-btn px-3 py-1.5 rounded-2xl bg-parchment dark:bg-slate-900 flex items-center gap-2.5"
           >
-            <svg class="w-5 h-5 -rotate-90" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" class="text-slate-200 dark:text-slate-700"></circle>
+            <svg class="w-9 h-9" viewBox="0 0 100 100">
+              <!-- Outer Brass Bezel -->
+              <circle cx="50" cy="50" r="44" fill="#FFFDF9" stroke="#1C1917" stroke-width="5" />
+              <!-- 5-Minute Sprint Countdown Progress Ring -->
               <circle
                 id="hop-sprint-ring-circle"
-                cx="12"
-                cy="12"
-                r="9"
+                cx="50"
+                cy="50"
+                r="38"
                 fill="none"
-                stroke="#F59E0B"
-                stroke-width="2.5"
-                stroke-dasharray="56.55"
+                stroke="#EAB308"
+                stroke-width="7"
+                stroke-dasharray="238.76"
                 stroke-dashoffset="0"
                 stroke-linecap="round"
-              ></circle>
+                transform="rotate(-90 50 50)"
+              />
+              <!-- Magnetic Crimson & Charcoal Needle -->
+              <g id="hop-compass-needle" class="log-pose-needle">
+                <polygon points="50,14 57,50 43,50" fill="#D92D20" stroke="#1C1917" stroke-width="2" />
+                <polygon points="50,86 57,50 43,50" fill="#1C1917" />
+                <circle cx="50" cy="50" r="6" fill="#EAB308" stroke="#1C1917" stroke-width="2.5" />
+              </g>
             </svg>
-            <span id="hop-sprint-clock" class="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-300">5:00</span>
+            <div class="text-left">
+              <span class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400">
+                SPRINT
+              </span>
+              <span id="hop-sprint-clock" class="font-display text-lg font-bold tabular-nums text-charcoalInk dark:text-parchment leading-none">
+                5:00
+              </span>
+            </div>
           </button>
         </div>
 
-        <!-- Single Task Title & Context -->
-        <h2 id="hop-task-title" class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 leading-snug">
-          Reply to Sarah’s IEP meeting time confirmation
-        </h2>
-        <p id="hop-task-context" class="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          Time-sensitive • Today
-        </p>
-
-        <!-- Compact 3D Priority Score Pills -->
-        <div id="hop-task-scores" class="mt-4 flex flex-wrap items-center gap-1.5">
-          <!-- Score pills injected dynamically -->
+        <!-- Single Micro-Task Title & 1-Line Context -->
+        <div class="my-2">
+          <h2 id="hop-task-title" class="text-2xl sm:text-3xl font-bold text-charcoalInk dark:text-parchment leading-snug">
+            Reply to Sarah’s IEP meeting time confirmation
+          </h2>
+          <p id="hop-task-context" class="mt-2.5 text-sm font-bold text-stone-600 dark:text-slate-300">
+            Time-sensitive • Today
+          </p>
         </div>
 
         <!-- Primary Action Buttons -->
@@ -385,48 +563,50 @@
           <button
             id="hop-done-btn"
             type="button"
-            class="flex-1 py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-semibold text-sm sm:text-base shadow-sm transition flex items-center justify-center gap-2"
+            class="flex-1 manga-panel manga-btn py-4 px-5 rounded-2xl bg-crimsonFlag hover:bg-red-700 text-white font-display text-lg font-bold uppercase tracking-wider flex items-center justify-center gap-2"
           >
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-            <span>Done! Next 5-Min Win</span>
+            <span>CLEARED! NEXT TARGET</span>
           </button>
 
           <button
             id="hop-skip-btn"
             type="button"
-            class="py-3.5 px-5 rounded-2xl bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium text-sm transition flex items-center justify-center gap-1.5"
+            class="manga-panel manga-btn py-4 px-5 rounded-2xl bg-parchment dark:bg-slate-700 text-charcoalInk dark:text-parchment font-display text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-1.5"
           >
-            <span>Skip for Now</span>
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <span>NEXT ISLAND (SKIP)</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
         </div>
       </div>
 
-      <!-- Hour of Power All-Quick-Wins-Done State -->
-      <div id="hop-empty-card" class="hidden rounded-3xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 p-7 text-center shadow-soft">
-        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-600 dark:text-amber-300 flex items-center justify-center text-xl">
-          ⚡
-        </div>
-        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">All 5-minute micro-wins cleared!</h3>
-        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
-          Speak a few quick errands into the mic, load sample micro-tasks, or return to your Top 5 view.
+      <!-- Log Pose All-5-Min-Targets-Cleared State -->
+      <div id="hop-empty-card" class="hidden rounded-3xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel p-7 text-center">
+        <span class="inline-block px-3 py-1 rounded-lg bg-saffronGold text-charcoalInk font-display text-xs font-bold uppercase tracking-widest border-2 border-charcoalInk mb-3">
+          SECTOR CLEARED
+        </span>
+        <h3 class="font-display text-2xl font-bold uppercase text-charcoalInk dark:text-parchment">
+          All 5-Minute Targets Cleared!
+        </h3>
+        <p class="text-sm text-stone-600 dark:text-slate-300 mt-1.5 max-w-sm mx-auto leading-relaxed">
+          Voice-dump quick errands anytime, load sample 5-minute teacher jobs, or head back to your Top 5 deck.
         </p>
-        <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
           <button
             id="hop-load-samples-btn"
             type="button"
-            class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition"
+            class="manga-panel-sm manga-btn px-4 py-2.5 rounded-xl bg-saffronGold font-display text-xs font-bold uppercase tracking-wider text-charcoalInk"
           >
-            Load Sample 5-Min Errands
+            Load 5-Min Quick Jobs
           </button>
           <button
             id="hop-exit-empty-btn"
             type="button"
-            class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition"
+            class="manga-panel-sm manga-btn px-4 py-2.5 rounded-xl bg-parchment dark:bg-slate-700 font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment"
           >
             Back to Top 5
           </button>
@@ -434,238 +614,258 @@
       </div>
     </section>
 
-    <!-- CALM EMPTY STATE (When all tasks are cleared) -->
-    <div id="empty-state" class="hidden my-auto py-12 px-6 text-center rounded-3xl bg-white/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-      <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"></path>
-        </svg>
-      </div>
-      <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Your mind is clear</h2>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
-        Nothing urgent on your plate. Tap the mic anytime you want to offload a thought.
+    <!-- ======================================================================
+         CALM CLEAR DECK EMPTY STATE
+         ====================================================================== -->
+    <div id="empty-state" class="hidden my-auto py-12 px-6 text-center rounded-3xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel">
+      <span class="inline-block px-3 py-1 rounded-lg bg-saffronGold text-charcoalInk font-display text-xs font-bold uppercase tracking-widest border-2 border-charcoalInk mb-3">
+        CLEAR HORIZON
+      </span>
+      <h2 class="font-display text-2xl font-bold uppercase text-charcoalInk dark:text-parchment">
+        Deck is Clear
+      </h2>
+      <p class="text-sm text-stone-600 dark:text-slate-300 mt-1.5 max-w-xs mx-auto leading-relaxed">
+        Nothing urgent on your radar. Hit Voice Dump whenever a thought pops up between bells.
       </p>
     </div>
   </main>
 
-  <!-- BOTTOM FLOATING VOICE & BRAIN-DUMP DOCK -->
+  <!-- ========================================================================
+       THUMB-ZONE CORRIDOR BOTTOM DOCK (ONE-HANDED ERGONOMICS)
+       ======================================================================== -->
   <div class="fixed bottom-0 inset-x-0 z-30 pointer-events-none">
-    <!-- Subtle gradient fade behind dock -->
-    <div class="h-10 bg-gradient-to-t from-[#FAF9F6] dark:from-[#0F172A] to-transparent"></div>
+    <div class="max-w-2xl mx-auto px-3 pb-4 pt-2 pointer-events-auto">
 
-    <div class="bg-[#FAF9F6]/95 dark:bg-[#0F172A]/95 backdrop-blur-md pb-5 pt-1 px-4 pointer-events-auto border-t border-slate-200/50 dark:border-slate-800/70">
-      <div class="max-w-2xl mx-auto flex flex-col items-center">
-
-        <!-- Live Continuous Speech Transcript Card (Stays open across natural thinking pauses) -->
-        <div id="live-transcript-box" class="hidden w-full mb-3 rounded-2xl bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-800/70 p-4 shadow-soft">
-          <div class="flex items-center justify-between gap-2 mb-2">
-            <div class="flex items-center gap-2.5">
-              <!-- Animated Audio Waveform -->
-              <div class="flex items-center gap-1 h-6" aria-hidden="true">
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-              </div>
-              <div>
-                <span class="text-xs font-semibold text-rose-600 dark:text-rose-400 block">
-                  Listening continuously — pause to think anytime
-                </span>
-                <span class="text-[11px] text-slate-400 dark:text-slate-500">
-                  Won’t cut off until you tap Done &amp; Sort
-                </span>
-              </div>
+      <!-- Live Continuous Speech Transcript Card (Stays open across natural thinking pauses) -->
+      <div id="live-transcript-box" class="hidden w-full mb-3 rounded-2xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel p-4">
+        <div class="flex items-center justify-between gap-2 mb-2.5">
+          <div class="flex items-center gap-2.5">
+            <!-- Nautical Audio Waveform -->
+            <div class="flex items-center gap-1 h-6" aria-hidden="true">
+              <span class="nautical-bar"></span>
+              <span class="nautical-bar"></span>
+              <span class="nautical-bar"></span>
+              <span class="nautical-bar"></span>
+              <span class="nautical-bar"></span>
             </div>
-
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button
-                id="cancel-mic-btn"
-                type="button"
-                class="px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-              >
-                Cancel
-              </button>
-              <button
-                id="stop-mic-early-btn"
-                type="button"
-                class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-2xs transition"
-              >
-                Done &amp; Sort
-              </button>
+            <div>
+              <span class="font-display text-xs font-bold uppercase tracking-wider text-crimsonFlag block">
+                LISTENING CONTINUOUSLY — PAUSE ANYTIME
+              </span>
+              <span class="text-[11px] font-bold text-stone-500 dark:text-slate-400">
+                Won’t cut off until you tap Done &amp; Triage
+              </span>
             </div>
           </div>
-          <p id="live-transcript-text" class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed min-h-[2rem] max-h-28 overflow-y-auto bg-slate-50/80 dark:bg-slate-900/50 rounded-xl px-3 py-2">
-            Start talking...
-          </p>
-        </div>
 
-        <!-- Expandable Quick-Text & Sample Brain-Dump Drawer -->
-        <div id="text-dump-drawer" class="hidden w-full mb-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3.5 shadow-soft">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Brain-Dump Input or 1-Click Test Scenarios</span>
-            <button id="close-text-drawer-btn" type="button" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-1.5 py-0.5">
-              Close
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              id="cancel-mic-btn"
+              type="button"
+              class="manga-panel-sm manga-btn px-2.5 py-1.5 rounded-xl bg-parchment dark:bg-slate-700 font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment"
+            >
+              CANCEL
+            </button>
+            <button
+              id="stop-mic-early-btn"
+              type="button"
+              class="manga-panel-sm manga-btn px-3.5 py-1.5 rounded-xl bg-crimsonFlag font-display text-xs font-bold uppercase tracking-wider text-white"
+            >
+              DONE &amp; TRIAGE
             </button>
           </div>
-
-          <!-- Sample Voice-Dump Pills -->
-          <div class="flex flex-wrap gap-1.5 mb-2.5">
-            <button
-              type="button"
-              class="sample-dump-btn text-left text-[11px] font-medium px-2.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition"
-              data-sample="Just had a conversation with Mr. Mott in English. Joe was punching on with Teddy during period three. Need to speak with both students very urgently, contact parents, and issue consequences, likely a suspension."
-            >
-              Sample 1: Urgent School Incident (Mr. Mott)
-            </button>
-            <button
-              type="button"
-              class="sample-dump-btn text-left text-[11px] font-medium px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition"
-              data-sample="Quick five minute jobs: text Mum back about Sunday dinner, pay the overdue $18 library fine online, approve Jake's excursion form, and order cat food."
-            >
-              Sample 2: Quick 5-Min Errands (Hour of Power)
-            </button>
-            <button
-              type="button"
-              class="sample-dump-btn text-left text-[11px] font-medium px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition"
-              data-sample="At some point I should renew my library card and order more printer ink."
-            >
-              Sample 3: Low-Urgency Admin (5-Day Aging Test)
-            </button>
-          </div>
-
-          <!-- Textarea + Submit -->
-          <form id="text-dump-form" class="flex flex-col sm:flex-row gap-2">
-            <textarea
-              id="text-dump-input"
-              rows="2"
-              placeholder="Ramble freely here... AI will split tasks, score urgency, and keep only the top 5 visible."
-              class="flex-1 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-            ></textarea>
-            <button
-              type="submit"
-              id="submit-dump-btn"
-              class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition shrink-0 flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              <span>Sort Into Top 5</span>
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </button>
-          </form>
         </div>
-
-        <!-- Primary Mic Button + Secondary Type/Sample Trigger -->
-        <div class="flex items-center justify-center gap-4 w-full relative">
-          <!-- Left spacer for visual symmetry -->
-          <div class="w-24 hidden sm:block"></div>
-
-          <!-- Center Pulsing Microphone Button -->
-          <button
-            id="mic-btn"
-            type="button"
-            aria-label="Speak your tasks"
-            class="mic-idle w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white flex items-center justify-center transition-all focus:outline-none focus:ring-4 focus:ring-indigo-300 dark:focus:ring-indigo-800"
-          >
-            <svg id="mic-icon" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="22"></line>
-            </svg>
-          </button>
-
-          <!-- Quick-Text / Samples Toggle Pill -->
-          <button
-            id="open-text-drawer-btn"
-            type="button"
-            class="px-3 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600 transition shadow-2xs flex items-center gap-1.5"
-          >
-            <svg class="w-3.5 h-3.5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-            </svg>
-            <span>Type / Samples</span>
-          </button>
-        </div>
-
-        <p id="mic-helper-label" class="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
-          Tap mic to dump thoughts — AI handles the sorting
+        <p id="live-transcript-text" class="text-sm font-bold text-charcoalInk dark:text-parchment leading-relaxed min-h-[2.25rem] max-h-28 overflow-y-auto bg-parchment dark:bg-slate-900 rounded-xl px-3 py-2 border-2 border-charcoalInk/20">
+          Start talking...
         </p>
+      </div>
+
+      <!-- Slide-Up Quick-Text & Teacher Sample Brain-Dump Drawer -->
+      <div id="text-dump-drawer" class="hidden w-full mb-3 rounded-2xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel p-4">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="font-display text-sm font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment">
+            BRAIN-DUMP OR 1-CLICK TEACHER TESTS
+          </span>
+          <button id="close-text-drawer-btn" type="button" class="font-display text-xs font-bold uppercase text-stone-500 hover:text-charcoalInk dark:hover:text-white px-2 py-0.5">
+            CLOSE ✕
+          </button>
+        </div>
+
+        <!-- One-Click Teacher Sample Dumps -->
+        <div class="flex flex-col sm:flex-row flex-wrap gap-2 mb-3">
+          <button
+            type="button"
+            class="sample-dump-btn manga-panel-sm manga-btn text-left text-xs font-bold px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/60 text-charcoalInk dark:text-red-100 border-l-4 border-l-crimsonFlag"
+            data-sample="Just had a conversation with Mr. Mott in English. Joe was punching on with Teddy during period three. Need to speak with both students very urgently, contact parents, and issue consequences, likely a suspension."
+          >
+            1. Urgent Incident: Mr. Mott / Joe &amp; Teddy
+          </button>
+          <button
+            type="button"
+            class="sample-dump-btn manga-panel-sm manga-btn text-left text-xs font-bold px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-charcoalInk dark:text-amber-100"
+            data-sample="Quick five minute jobs: text Mum back about Sunday dinner, pay the overdue $18 library fine online, approve Jake's excursion form, and order cat food."
+          >
+            2. 5-Min Quick Wins (Log Pose Mode)
+          </button>
+          <button
+            type="button"
+            class="sample-dump-btn manga-panel-sm manga-btn text-left text-xs font-bold px-3 py-2 rounded-xl bg-parchment dark:bg-slate-700 text-charcoalInk dark:text-parchment"
+            data-sample="At some point I should renew my library card and order more printer ink."
+          >
+            3. Low-Urgency Admin (5-Day Drift Test)
+          </button>
+        </div>
+
+        <!-- Textarea + Submit -->
+        <form id="text-dump-form" class="flex flex-col sm:flex-row gap-2">
+          <textarea
+            id="text-dump-input"
+            rows="2"
+            placeholder="Ramble freely here... AI splits tasks and keeps only your Top 5."
+            class="flex-1 rounded-xl bg-parchment dark:bg-slate-900 border-2 border-charcoalInk dark:border-slate-500 px-3 py-2 text-sm font-bold text-charcoalInk dark:text-parchment placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-saffronGold resize-none"
+          ></textarea>
+          <button
+            type="submit"
+            id="submit-dump-btn"
+            class="manga-panel-sm manga-btn px-4 py-2.5 rounded-xl bg-crimsonFlag text-white font-display text-sm font-bold uppercase tracking-wider shrink-0 flex items-center justify-center gap-1.5"
+          >
+            <span>TRIAGE TOP 5</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- THREE LARGE THUMB-FRIENDLY CORRIDOR CONTROLS -->
+      <div class="rounded-3xl bg-[#FFFDF9]/95 dark:bg-slate-900/95 backdrop-blur-md manga-panel p-2.5 grid grid-cols-3 gap-2.5 items-center">
+
+        <!-- 1. Left Thumb Control: LOG POSE (5-Min Single-Task Sprint Mode) -->
+        <button
+          id="toggle-hop-btn"
+          type="button"
+          class="manga-panel-sm manga-btn h-14 rounded-2xl bg-parchment dark:bg-slate-800 px-2 flex flex-col items-center justify-center gap-0.5 text-charcoalInk dark:text-parchment"
+        >
+          <svg class="w-5 h-5 text-crimsonFlag dark:text-saffronGold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+          <span id="hop-btn-label" class="font-display text-xs sm:text-sm font-bold uppercase tracking-wider leading-none">
+            LOG POSE
+          </span>
+        </button>
+
+        <!-- 2. Center Oversized Crimson VOICE DUMP Microphone CTA -->
+        <button
+          id="mic-btn"
+          type="button"
+          aria-label="Voice Dump"
+          class="voice-cta-idle manga-btn h-16 -mt-3 rounded-2xl bg-crimsonFlag border-[3px] border-charcoalInk dark:border-parchment text-white px-2 flex flex-col items-center justify-center gap-0.5 focus:outline-none"
+        >
+          <svg class="w-6 h-6 text-saffronGold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+          </svg>
+          <span id="mic-cta-text" class="font-display text-xs sm:text-sm font-bold uppercase tracking-wider leading-none">
+            VOICE DUMP
+          </span>
+        </button>
+
+        <!-- 3. Right Thumb Control: TYPE / TEST Drawer -->
+        <button
+          id="open-text-drawer-btn"
+          type="button"
+          class="manga-panel-sm manga-btn h-14 rounded-2xl bg-parchment dark:bg-slate-800 px-2 flex flex-col items-center justify-center gap-0.5 text-charcoalInk dark:text-parchment"
+        >
+          <svg class="w-5 h-5 text-charcoalInk dark:text-saffronGold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span class="font-display text-xs sm:text-sm font-bold uppercase tracking-wider leading-none">
+            TYPE / TEST
+          </span>
+        </button>
+
       </div>
     </div>
   </div>
 
-  <!-- 5-SECOND NON-INTRUSIVE UNDO / FEEDBACK TOAST -->
+  <!-- ========================================================================
+       5-SECOND UNDO TOAST
+       ======================================================================== -->
   <div
     id="undo-toast"
     role="status"
     aria-live="polite"
-    class="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 hidden items-center gap-3 px-4 py-2.5 rounded-2xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg text-xs font-medium transition-all"
+    class="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 hidden items-center gap-3 px-4 py-2.5 rounded-2xl bg-charcoalInk dark:bg-parchment text-parchment dark:text-charcoalInk manga-panel-sm text-xs font-bold"
   >
-    <span id="undo-toast-msg">Task completed</span>
+    <span id="undo-toast-msg" class="font-display uppercase tracking-wider">DON!! TARGET CLEARED</span>
     <button
       id="undo-action-btn"
       type="button"
-      class="px-2.5 py-1 rounded-lg bg-white/15 dark:bg-slate-900/15 hover:bg-white/25 dark:hover:bg-slate-900/25 font-bold text-emerald-300 dark:text-emerald-700 transition"
+      class="px-2.5 py-1 rounded-lg bg-saffronGold text-charcoalInk font-display uppercase tracking-wider font-bold border border-charcoalInk"
     >
-      Undo
+      UNDO
     </button>
   </div>
 
-  <!-- END-OF-WEEK CELEBRATION MODAL -->
+  <!-- ========================================================================
+       WEEKLY ARC CELEBRATION MODAL
+       ======================================================================== -->
   <div
     id="wins-modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="wins-modal-title"
-    class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+    class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs"
   >
-    <div class="w-full max-w-md rounded-3xl bg-[#FAF9F6] dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl transform transition-all">
+    <div class="w-full max-w-md rounded-3xl bg-parchment dark:bg-slate-900 manga-panel p-6">
       <div class="flex items-start justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-              <path d="M4 22h16"></path>
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-            </svg>
-          </div>
-          <div>
-            <h2 id="wins-modal-title" class="text-lg font-bold text-slate-800 dark:text-slate-100">Your Weekly Wins</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Celebrating momentum — zero guilt, ever.</p>
-          </div>
+        <div>
+          <span class="font-display text-xs font-bold uppercase tracking-widest text-crimsonFlag">
+            CAPTAIN'S LOG • ARC SUMMARY
+          </span>
+          <h2 id="wins-modal-title" class="font-display text-2xl font-bold uppercase text-charcoalInk dark:text-parchment">
+            Weekly Arc Wins
+          </h2>
         </div>
-        <button id="close-wins-modal-btn" type="button" aria-label="Close modal" class="p-2 rounded-xl text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+        <button
+          id="close-wins-modal-btn"
+          type="button"
+          aria-label="Close modal"
+          class="manga-panel-sm manga-btn w-8 h-8 rounded-xl bg-[#FFFDF9] dark:bg-slate-800 font-bold text-charcoalInk dark:text-parchment"
+        >
+          ✕
         </button>
       </div>
 
-      <!-- Hero Stat Card -->
-      <div class="mt-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-white shadow-sm">
+      <!-- Saffron Gold Bounty / Arc Gauge Card -->
+      <div class="mt-4 rounded-2xl bg-saffronGold manga-panel p-5 text-charcoalInk">
         <div class="flex items-baseline justify-between">
           <div>
-            <p class="text-xs uppercase tracking-wider font-semibold text-emerald-100">Tasks Conquered This Week</p>
-            <p id="wins-total-number" class="text-4xl font-bold mt-1">0</p>
+            <p class="font-display text-xs uppercase tracking-widest font-bold">
+              TARGETS CLEARED THIS WEEK
+            </p>
+            <p id="wins-total-number" class="font-display text-5xl font-bold mt-1 leading-none">
+              0
+            </p>
           </div>
-          <span class="px-3 py-1 rounded-full bg-white/20 text-xs font-semibold">
-            Momentum Builder
+          <span class="px-2.5 py-1 rounded-lg bg-charcoalInk text-saffronGold font-display text-xs font-bold uppercase tracking-wider">
+            UNSTOPPABLE
           </span>
         </div>
-        <p id="wins-encouragement" class="text-xs text-emerald-50 mt-3 leading-relaxed">
-          Every single checkbox ticked is real cognitive load lifted off your mind.
+        <p id="wins-encouragement" class="text-xs font-bold mt-3 leading-relaxed">
+          Every cleared target takes real weight off your mind. Zero guilt for anything still in the hold.
         </p>
       </div>
 
-      <!-- Theme Highlights -->
+      <!-- Conquered Arc Areas -->
       <div class="mt-4">
-        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Focus Areas Conquered</h3>
+        <h3 class="font-display text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400 mb-2">
+          SECTORS CONQUERED
+        </h3>
         <div id="wins-themes-list" class="flex flex-wrap gap-1.5">
           <!-- Category badges injected here -->
         </div>
@@ -673,8 +873,10 @@
 
       <!-- Recent Wins List -->
       <div class="mt-4">
-        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Recent Accomplishments</h3>
-        <ul id="wins-recent-list" class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+        <h3 class="font-display text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400 mb-2">
+          RECENT CLEARED TARGETS
+        </h3>
+        <ul id="wins-recent-list" class="max-h-40 overflow-y-auto space-y-2 pr-1">
           <!-- Completed task titles injected here -->
         </ul>
       </div>
@@ -682,44 +884,44 @@
       <button
         id="celebrate-more-btn"
         type="button"
-        class="mt-5 w-full py-3 rounded-2xl bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold hover:opacity-95 transition"
+        class="mt-5 w-full manga-panel manga-btn py-3.5 rounded-2xl bg-crimsonFlag text-white font-display text-sm font-bold uppercase tracking-widest"
       >
-        Keep Flowing
+        SET SAIL • BACK TO DECK
       </button>
     </div>
   </div>
 
+  <!-- ========================================================================
+       APPLICATION LOGIC
+       ======================================================================== -->
   <script>
     /**
-     * FocusFive — ADHD-Friendly Voice-First Top-5 Task Manager
-     * Architecture:
-     * 1. Local-first state persisted in localStorage.
-     * 2. 3D Priority Scoring (Emotional 35%, Urgency/Deadline 40%, Life Impact 25%) +
-     *    Anti-Stagnation Time-Decay Engine (+8/day + +30 bonus at Day 5).
-     * 3. Strict Top-5 Gatekeeper + Hour of Power Single-Task 5-Minute Sprint Mode.
-     * 4. Continuous Pause-Tolerant Web Speech API capture + Gemini API structured JSON extraction.
+     * FocusFive — "Grand Line Tactile" ADHD Task Triage Engine
+     * - Under-the-hood 3D scoring: Emotional (35%) + Urgency (40%) + Life Impact (25%)
+     * - 5-Day Anti-Stagnation Time-Decay: +8 pts/day + +30 pts threshold boost at Day 5
+     * - Clean 2-Line Cards: Zero numeric badges exposed on task cards
+     * - Log Pose Mode: Serves ONE <=5-min micro-task at a time
+     * - Continuous Pause-Tolerant Web Speech API capture
      */
 
-    const STORAGE_KEY = 'focusfive_state_v2';
+    const STORAGE_KEY = 'focusfive_grandline_v1';
     const DAY_MS = 24 * 60 * 60 * 1000;
-    const apiKey = ""; // Runtime-provided environment key
+    const apiKey = ""; // Runtime-provided API key
 
-    // --- Application State ---
     let appState = {
-      tasks: [],         // All active (non-completed, non-dropped) tasks
-      completedWins: [], // Log of completed tasks for Weekly Wins celebration
-      simDayOffset: 0,   // Simulated days forward for testing 5-day escalation
+      tasks: [],
+      completedWins: [],
+      simDayOffset: 0,
       darkMode: false,
       dismissedReminders: []
     };
 
-    // Hour of Power Runtime State
     let hopState = {
       active: false,
-      sessionSecondsLeft: 60 * 60, // 60-minute Hour of Power session
+      sessionSecondsLeft: 60 * 60,
       sessionRunning: false,
       sessionIntervalId: null,
-      sprintSecondsLeft: 5 * 60,   // 5-minute micro-task ring
+      sprintSecondsLeft: 5 * 60,
       sprintRunning: false,
       sprintIntervalId: null,
       sessionWins: 0,
@@ -733,7 +935,7 @@
     let finalTranscriptBuffer = '';
     let interimTranscriptBuffer = '';
 
-    // --- Virtual Clock Helpers (Supports real time + simulated time jumps) ---
+    // --- Virtual Time & Hidden 3D Priority Scoring ---
     function getVirtualNowMs() {
       return Date.now() + (appState.simDayOffset * DAY_MS);
     }
@@ -744,10 +946,6 @@
       return Math.floor(elapsedMs / DAY_MS);
     }
 
-    /**
-     * Computes 3D weighted base score (1-100) from 1-10 dimensions:
-     * Emotional Impact (35%) + Urgency/Deadline (40%) + General Life Impact (25%)
-     */
     function compute3DBaseScore(emotional, urgency, life) {
       const e = Math.min(10, Math.max(1, Number(emotional) || 5));
       const u = Math.min(10, Math.max(1, Number(urgency) || 5));
@@ -755,10 +953,6 @@
       return Math.round((e * 0.35 + u * 0.40 + l * 0.25) * 10);
     }
 
-    /**
-     * Deterministic Anti-Stagnation & Time-Decay Urgency Formula:
-     * effective = min(100, base + (days * 8) + (days >= 5 ? 30 : 0) + dueBoost)
-     */
     function computeEffectiveUrgency(task) {
       const days = getDaysUnmodified(task);
       const ageBoost = days * 8;
@@ -776,14 +970,9 @@
       }
 
       const base = task.base_urgency_score || compute3DBaseScore(task.emotional_score, task.urgency_score, task.life_score);
-      const raw = base + ageBoost + stagnationBonus + dueBoost;
-      return Math.min(100, Math.max(1, Math.round(raw)));
+      return Math.min(100, Math.max(1, Math.round(base + ageBoost + stagnationBonus + dueBoost)));
     }
 
-    /**
-     * Returns the sorted active queue, ranked by effective urgency score descending,
-     * breaking ties by oldest creation timestamp first.
-     */
     function getRankedActiveTasks() {
       return [...appState.tasks]
         .map(task => ({
@@ -799,7 +988,7 @@
         });
     }
 
-    // --- Seed Realistic Initial Data (Includes quick <=5m tasks + low-urgency aging item) ---
+    // --- Seed Realistic Teacher Tasks ---
     function createSeedState() {
       const now = Date.now();
       return {
@@ -838,7 +1027,7 @@
             id: 'tsk_seed_3',
             title: 'Pay overdue $18 library fine online',
             context: 'Quick relief • 3 mins',
-            category: 'Admin',
+            category: 'Quick Errands',
             duration_mins: 3,
             emotional_score: 8,
             urgency_score: 6,
@@ -901,7 +1090,7 @@
           }
         ],
         simDayOffset: 0,
-        darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+        darkMode: false,
         dismissedReminders: []
       };
     }
@@ -916,9 +1105,7 @@
             return;
           }
         }
-      } catch (e) {
-        // Fallback cleanly to seed state if storage is unavailable
-      }
+      } catch (e) {}
       appState = createSeedState();
       saveState();
     }
@@ -926,70 +1113,63 @@
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      } catch (e) {
-        // Ignore quota errors in restricted frames
-      }
+      } catch (e) {}
     }
 
-    // --- Theme Management ---
+    // --- Theme Management (Warm Parchment vs Deep Sea Ink) ---
     function applyTheme() {
       const htmlEl = document.documentElement;
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
       if (appState.darkMode) {
         htmlEl.classList.add('dark');
+        if (metaTheme) metaTheme.setAttribute('content', '#111827');
       } else {
         htmlEl.classList.remove('dark');
+        if (metaTheme) metaTheme.setAttribute('content', '#F7F2E7');
       }
     }
 
-    // --- Context/Time/Age Chip Formatter (Strict 3-data-point rule, calm neutral tone) ---
-    function formatTaskChip(task) {
-      // 5+ Day Stagnation Escalation overrides with calm neutral prompt
+    // --- Visual Tier Evaluator (Zero Numeric Scores Shown on Cards) ---
+    function getCardVisualTier(task) {
       if (task.daysUnmodified >= 5) {
-        return {
-          text: `Waiting ${task.daysUnmodified}d • Still needed?`,
-          isAged: true
-        };
+        return 'aged'; // Tier 2: Warm amber tint + DRIFTING 5D • ACT OR DROP stamp + inline Snooze/Drop
       }
+      if (task.effective_urgency_score >= 85 || task.needs_urgent_nudge) {
+        return 'critical'; // Tier 1: Thick 6px Crimson Flag left bar + bold ink framing
+      }
+      return 'standard'; // Tier 3: Crisp cream card with 2.5px Charcoal Ink border
+    }
 
-      // Format upcoming due_datetime if present
+    function formatTaskContextLine(task) {
       if (task.due_datetime) {
         const d = new Date(task.due_datetime);
         if (!isNaN(d.getTime())) {
           const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
           const baseCtx = task.context ? `${task.context} • ` : '';
-          return {
-            text: `${baseCtx}Due ${timeStr}`,
-            isAged: false
-          };
+          return `${baseCtx}Due ${timeStr}`;
         }
       }
-
-      return {
-        text: task.context || 'Captured via voice',
-        isAged: false
-      };
+      return task.context || 'Voice capture';
     }
 
-    // --- Gentle Front-of-Mind Reminder Evaluator ---
+    // --- Front-of-Mind Reminder Evaluator ---
     function evaluateReminders(topFive) {
       const banner = document.getElementById('reminder-banner');
       const titleEl = document.getElementById('reminder-banner-title');
       const bodyEl = document.getElementById('reminder-banner-body');
 
-      // Priority 1: Check for 5+ day aged tasks that just surfaced into Top 5
       const agedSurfaced = topFive.find(
         t => t.daysUnmodified >= 5 && !appState.dismissedReminders.includes(`aged_${t.id}_${t.daysUnmodified}`)
       );
 
       if (agedSurfaced) {
         banner.dataset.reminderKey = `aged_${agedSurfaced.id}_${agedSurfaced.daysUnmodified}`;
-        titleEl.textContent = 'Gentle front-of-mind nudge';
-        bodyEl.textContent = `"${agedSurfaced.title}" has waited ${agedSurfaced.daysUnmodified} days. Knock it out now, snooze it, or drop it guilt-free.`;
+        titleEl.textContent = 'DRIFTING 5D • ACT OR DROP';
+        bodyEl.textContent = `"${agedSurfaced.title}" has been drifting for ${agedSurfaced.daysUnmodified} days. Knock it out, snooze 3d, or drop it guilt-free.`;
         banner.classList.remove('hidden');
         return;
       }
 
-      // Priority 2: Check for tasks with due_datetime coming up within 3 hours
       const virtualNow = getVirtualNowMs();
       const upcomingTimed = topFive.find(t => {
         if (!t.due_datetime) return false;
@@ -1002,8 +1182,8 @@
         const d = new Date(upcomingTimed.due_datetime);
         const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         banner.dataset.reminderKey = `due_${upcomingTimed.id}`;
-        titleEl.textContent = `Coming up at ${timeStr}`;
-        bodyEl.textContent = `"${upcomingTimed.title}" is coming up soon — brought to the top so it doesn't slip away.`;
+        titleEl.textContent = `COMING UP AT ${timeStr}`;
+        bodyEl.textContent = `"${upcomingTimed.title}" is locked on your radar so it doesn't slip between bells.`;
         banner.classList.remove('hidden');
         return;
       }
@@ -1011,27 +1191,7 @@
       banner.classList.add('hidden');
     }
 
-    // --- Compact 3D Score + Duration Pills Builder ---
-    function renderScorePillsHTML(task) {
-      const e = task.emotional_score || 5;
-      const u = task.urgency_score || 5;
-      const l = task.life_score || 5;
-      const mins = task.duration_mins || 10;
-      const isQuick = mins <= 5;
-
-      const quickBadge = isQuick
-        ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100/90 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 text-[10px] font-semibold">⚡ ~${mins}m</span>`
-        : `<span class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 text-[10px] font-medium">~${mins}m</span>`;
-
-      return `
-        ${quickBadge}
-        <span title="Emotional Relief Impact (35%)" class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-[10px] font-medium">E:${e}</span>
-        <span title="Deadline Urgency (40%)" class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-medium">U:${u}</span>
-        <span title="General Life Impact (25%)" class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium">L:${l}</span>
-      `;
-    }
-
-    // --- Render Top-5 Active List OR Hour of Power Single-Card View ---
+    // --- Main Render Loop ---
     function renderApp() {
       applyTheme();
 
@@ -1045,18 +1205,23 @@
       const hopBtn = document.getElementById('toggle-hop-btn');
       const hopBtnLabel = document.getElementById('hop-btn-label');
       const winsPill = document.getElementById('wins-count-pill');
+      const arcBar = document.getElementById('header-arc-bar');
       const simBadge = document.getElementById('sim-day-badge');
 
-      winsPill.textContent = appState.completedWins.length;
+      const totalWins = appState.completedWins.length;
+      winsPill.textContent = totalWins;
+      // Fill Saffron Gold Weekly Arc gauge smoothly (caps at 100% around 10 weekly wins)
+      const arcPercent = Math.min(100, Math.max(12, totalWins * 10));
+      arcBar.style.width = `${arcPercent}%`;
 
       if (appState.simDayOffset > 0) {
-        simBadge.textContent = `+${appState.simDayOffset}d`;
+        simBadge.textContent = `+${appState.simDayOffset}D`;
         simBadge.classList.remove('hidden');
       } else {
         simBadge.classList.add('hidden');
       }
 
-      // If Hour of Power mode is active, completely hide the 5-task list to prevent paralysis
+      // Log Pose Mode: Completely hide 5-task list and serve ONE <=5 min micro-task
       if (hopState.active) {
         listEl.classList.add('hidden');
         subheaderEl.classList.add('hidden');
@@ -1064,20 +1229,20 @@
         document.getElementById('reminder-banner').classList.add('hidden');
         hopStage.classList.remove('hidden');
 
-        hopBtn.classList.remove('bg-amber-50', 'dark:bg-amber-950/50', 'text-amber-800', 'dark:text-amber-200');
-        hopBtn.classList.add('bg-amber-500', 'text-white', 'border-amber-500');
-        hopBtnLabel.textContent = 'Exit Power';
+        hopBtn.classList.remove('bg-parchment', 'dark:bg-slate-800', 'text-charcoalInk', 'dark:text-parchment');
+        hopBtn.classList.add('bg-saffronGold', 'text-charcoalInk');
+        hopBtnLabel.textContent = 'EXIT POSE';
 
-        renderHourOfPowerCard(ranked);
+        renderLogPoseCard(ranked);
         return;
       }
 
-      // Standard Top-5 View
+      // Standard Top-5 Deck View
       hopStage.classList.add('hidden');
       subheaderEl.classList.remove('hidden');
-      hopBtn.classList.add('bg-amber-50', 'dark:bg-amber-950/50', 'text-amber-800', 'dark:text-amber-200');
-      hopBtn.classList.remove('bg-amber-500', 'text-white', 'border-amber-500');
-      hopBtnLabel.textContent = 'Hour of Power';
+      hopBtn.classList.add('bg-parchment', 'dark:bg-slate-800', 'text-charcoalInk', 'dark:text-parchment');
+      hopBtn.classList.remove('bg-saffronGold');
+      hopBtnLabel.textContent = 'LOG POSE';
 
       evaluateReminders(topFive);
 
@@ -1093,99 +1258,94 @@
       listEl.innerHTML = '';
 
       topFive.forEach((task, index) => {
-        const chip = formatTaskChip(task);
+        const tier = getCardVisualTier(task);
         const li = document.createElement('li');
-        li.className = 'task-card-enter group rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/85 dark:border-slate-700/80 px-4 py-3.5 shadow-soft hover:border-indigo-300/80 dark:hover:border-indigo-500/60 transition-all flex items-center justify-between gap-3';
-        li.style.animationDelay = `${index * 45}ms`;
         li.dataset.taskId = task.id;
+        li.style.animationDelay = `${index * 40}ms`;
 
-        // Data Point 1: Large, thumb-friendly one-tap Checkbox
+        let tierClasses = 'bg-[#FFFDF9] dark:bg-slate-800';
+        if (tier === 'critical') {
+          tierClasses = 'bg-[#FFFDF9] dark:bg-slate-800 tier-critical';
+        } else if (tier === 'aged') {
+          tierClasses = 'tier-aged';
+        }
+
+        li.className = `task-card-enter relative rounded-2xl manga-panel ${tierClasses} px-4 py-3.5 flex items-center justify-between gap-3.5 overflow-hidden`;
+
+        // 1. Large Tactile Checkbox
         const checkBtn = document.createElement('button');
         checkBtn.type = 'button';
-        checkBtn.ariaLabel = `Complete ${task.title}`;
-        checkBtn.className = 'w-7 h-7 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 flex items-center justify-center shrink-0 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400';
+        checkBtn.ariaLabel = `Clear target: ${task.title}`;
+        checkBtn.className = 'w-8 h-8 rounded-xl border-[2.5px] border-charcoalInk dark:border-parchment bg-parchment dark:bg-slate-900 hover:bg-saffronGold dark:hover:bg-saffronGold flex items-center justify-center shrink-0 transition-colors focus:outline-none';
         checkBtn.innerHTML = `
-          <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 opacity-0 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-4 h-4 text-charcoalInk opacity-0 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         `;
-        checkBtn.addEventListener('click', (e) => handleCompleteTask(task.id, li, checkBtn, e));
+        checkBtn.addEventListener('click', () => handleCompleteTask(task.id, li, checkBtn));
 
-        // Center Text Column: Bold Title + Context/Age Chip + Compact 3D Score/Duration Pills
+        // 2. Clean 2-Line Center Column: Bold Actionable Task Title + 1-Line Context (Zero Numeric Badges)
         const contentDiv = document.createElement('div');
         contentDiv.className = 'flex-1 min-w-0';
 
         const titleEl = document.createElement('p');
-        titleEl.className = 'text-[15px] sm:text-base font-semibold text-slate-800 dark:text-slate-100 leading-snug break-words';
-        titleEl.innerHTML = `<span class="strike-text">${escapeHtml(task.title)}</span>`;
-
-        const metaRow = document.createElement('div');
-        metaRow.className = 'mt-1.5 flex flex-wrap items-center gap-1.5';
-
-        const chipEl = document.createElement('span');
-        chipEl.className = chip.isAged
-          ? 'inline-flex items-center gap-1 text-xs font-medium text-amber-800 dark:text-amber-200 bg-amber-100/80 dark:bg-amber-900/40 px-2 py-0.5 rounded-md truncate max-w-full'
-          : 'text-xs font-medium text-slate-500 dark:text-slate-400 truncate mr-1';
-        chipEl.textContent = chip.text;
-
-        metaRow.appendChild(chipEl);
-        metaRow.insertAdjacentHTML('beforeend', renderScorePillsHTML(task));
+        titleEl.className = 'text-base sm:text-[17px] font-bold text-charcoalInk dark:text-parchment leading-snug break-words';
+        titleEl.textContent = task.title;
 
         contentDiv.appendChild(titleEl);
-        contentDiv.appendChild(metaRow);
 
-        // Quick-Triage Controls (Snooze 3d & Guilt-Free Drop)
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'flex items-center gap-1 shrink-0 opacity-80 sm:opacity-60 group-hover:opacity-100 transition-opacity';
+        if (tier === 'aged') {
+          // Tier 2 Aged 5+ Days: Single 'DRIFTING 5D • ACT OR DROP' stamp chip + inline 'Snooze 3d' / 'Drop' buttons
+          const agedBar = document.createElement('div');
+          agedBar.className = 'mt-1.5 flex flex-wrap items-center gap-2';
 
-        const snoozeBtn = document.createElement('button');
-        snoozeBtn.type = 'button';
-        snoozeBtn.title = 'Snooze for 3 days (resets aging clock)';
-        snoozeBtn.ariaLabel = `Snooze ${task.title}`;
-        snoozeBtn.className = 'p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition';
-        snoozeBtn.innerHTML = `
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-        `;
-        snoozeBtn.addEventListener('click', () => handleSnoozeTask(task.id));
+          const stampChip = document.createElement('span');
+          stampChip.className = 'inline-block px-2 py-0.5 rounded bg-charcoalInk text-saffronGold font-display text-[11px] font-bold uppercase tracking-wider';
+          stampChip.textContent = `DRIFTING ${task.daysUnmodified}D • ACT OR DROP`;
 
-        const dropBtn = document.createElement('button');
-        dropBtn.type = 'button';
-        dropBtn.title = 'Not needed anymore (guilt-free drop)';
-        dropBtn.ariaLabel = `Drop ${task.title}`;
-        dropBtn.className = 'p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/70 transition';
-        dropBtn.innerHTML = `
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        `;
-        dropBtn.addEventListener('click', () => handleDropTask(task.id));
+          const snoozeInlineBtn = document.createElement('button');
+          snoozeInlineBtn.type = 'button';
+          snoozeInlineBtn.className = 'px-2 py-0.5 rounded-lg bg-[#FFFDF9] dark:bg-slate-800 border-[1.5px] border-charcoalInk dark:border-parchment font-display text-[11px] font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment hover:bg-saffronGold hover:text-charcoalInk transition';
+          snoozeInlineBtn.textContent = 'Snooze 3d';
+          snoozeInlineBtn.addEventListener('click', () => handleSnoozeTask(task.id));
 
-        actionsDiv.appendChild(snoozeBtn);
-        actionsDiv.appendChild(dropBtn);
+          const dropInlineBtn = document.createElement('button');
+          dropInlineBtn.type = 'button';
+          dropInlineBtn.className = 'px-2 py-0.5 rounded-lg bg-crimsonFlag text-white border-[1.5px] border-charcoalInk font-display text-[11px] font-bold uppercase tracking-wider hover:bg-red-700 transition';
+          dropInlineBtn.textContent = 'Drop';
+          dropInlineBtn.addEventListener('click', () => handleDropTask(task.id));
+
+          agedBar.appendChild(stampChip);
+          agedBar.appendChild(snoozeInlineBtn);
+          agedBar.appendChild(dropInlineBtn);
+          contentDiv.appendChild(agedBar);
+        } else {
+          // Tier 1 & Tier 3: Clean 1-line muted context chip only
+          const ctxEl = document.createElement('p');
+          ctxEl.className = tier === 'critical'
+            ? 'mt-0.5 text-xs font-bold text-crimsonFlag dark:text-red-400 truncate'
+            : 'mt-0.5 text-xs font-bold text-stone-500 dark:text-slate-400 truncate';
+          ctxEl.textContent = formatTaskContextLine(task);
+          contentDiv.appendChild(ctxEl);
+        }
 
         li.appendChild(checkBtn);
         li.appendChild(contentDiv);
-        li.appendChild(actionsDiv);
         listEl.appendChild(li);
       });
     }
 
-    // --- Hour of Power Single-Card Renderer (Serves ONLY ONE <=5 min task at a time) ---
+    // --- Log Pose Mode (Hour of Power — Single <=5 Min Target) ---
     function getQuickMicroTasks(rankedTasks) {
       const quickAll = rankedTasks.filter(t => (t.duration_mins || 10) <= 5);
       if (quickAll.length === 0) return [];
       const unskipped = quickAll.filter(t => !hopState.skippedIds.includes(t.id));
       if (unskipped.length > 0) return unskipped;
-      // If all quick tasks were skipped once, reset skip cycle smoothly
       hopState.skippedIds = [];
       return quickAll;
     }
 
-    function renderHourOfPowerCard(rankedTasks) {
+    function renderLogPoseCard(rankedTasks) {
       const activeCard = document.getElementById('hop-active-card');
       const emptyCard = document.getElementById('hop-empty-card');
       document.getElementById('hop-session-wins').textContent = hopState.sessionWins;
@@ -1202,12 +1362,8 @@
 
       const currentTask = candidates[0];
       activeCard.dataset.taskId = currentTask.id;
-
-      const mins = currentTask.duration_mins || 5;
-      document.getElementById('hop-task-badge').textContent = `Quick Win • ~${mins} min${mins === 1 ? '' : 's'}`;
       document.getElementById('hop-task-title').textContent = currentTask.title;
-      document.getElementById('hop-task-context').textContent = currentTask.context || '5-minute micro-task';
-      document.getElementById('hop-task-scores').innerHTML = renderScorePillsHTML(currentTask);
+      document.getElementById('hop-task-context').textContent = formatTaskContextLine(currentTask);
     }
 
     function updateHopTimersUI() {
@@ -1215,7 +1371,7 @@
       const sSecs = hopState.sessionSecondsLeft % 60;
       document.getElementById('hop-session-clock').textContent =
         `${String(sMins).padStart(2, '0')}:${String(sSecs).padStart(2, '0')}`;
-      document.getElementById('hop-timer-toggle-btn').textContent = hopState.sessionRunning ? 'Pause' : 'Start';
+      document.getElementById('hop-timer-toggle-btn').textContent = hopState.sessionRunning ? 'PAUSE' : 'START';
 
       const mMins = Math.floor(hopState.sprintSecondsLeft / 60);
       const mSecs = hopState.sprintSecondsLeft % 60;
@@ -1224,7 +1380,7 @@
 
       const circle = document.getElementById('hop-sprint-ring-circle');
       if (circle) {
-        const circumference = 56.55;
+        const circumference = 238.76;
         const progress = hopState.sprintSecondsLeft / (5 * 60);
         circle.style.strokeDashoffset = String(circumference * (1 - progress));
       }
@@ -1248,7 +1404,7 @@
             hopState.sessionRunning = false;
             clearInterval(hopState.sessionIntervalId);
             hopState.sessionIntervalId = null;
-            playGentleChime();
+            playTaikoDonSound();
             updateHopTimersUI();
           }
         }, 1000);
@@ -1274,11 +1430,19 @@
             hopState.sprintRunning = false;
             clearInterval(hopState.sprintIntervalId);
             hopState.sprintIntervalId = null;
-            playGentleChime();
+            playTaikoDonSound();
           }
         }, 1000);
       }
       updateHopTimersUI();
+    }
+
+    function spinCompassNeedle() {
+      const needle = document.getElementById('hop-compass-needle');
+      if (!needle) return;
+      needle.classList.remove('seeking');
+      void needle.offsetWidth;
+      needle.classList.add('seeking');
     }
 
     function handleHopCompleteCurrent() {
@@ -1287,32 +1451,32 @@
       const idx = appState.tasks.findIndex(t => t.id === taskId);
       if (idx === -1) return;
 
-      saveUndoSnapshot('⚡ 5-Min Win banked!');
-
-      const doneBtn = document.getElementById('hop-done-btn');
-      const rect = doneBtn.getBoundingClientRect();
-      triggerConfettiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      playGentleChime();
+      saveUndoSnapshot('DON!! TARGET CLEARED');
+      slamInkStampOnElement(card);
+      triggerDonMicroShake();
+      playTaikoDonSound();
+      spinCompassNeedle();
 
       const completedTask = appState.tasks[idx];
       appState.completedWins.unshift({
         id: 'win_' + Date.now(),
         title: completedTask.title,
-        category: completedTask.category || 'Hour of Power',
+        category: completedTask.category || 'Log Pose Sprint',
         completed_at: getVirtualNowMs()
       });
 
       hopState.sessionWins += 1;
-      appState.tasks = appState.tasks.filter(t => t.id !== taskId);
 
-      // Auto-start 60-min session clock on first win if not already ticking
       if (!hopState.sessionRunning) {
         toggleHopSessionTimer(true);
       }
-      resetHopSprintRing(true);
 
-      saveState();
-      renderApp();
+      setTimeout(() => {
+        appState.tasks = appState.tasks.filter(t => t.id !== taskId);
+        resetHopSprintRing(true);
+        saveState();
+        renderApp();
+      }, 360);
     }
 
     function handleHopSkipCurrent() {
@@ -1321,14 +1485,69 @@
       if (taskId && !hopState.skippedIds.includes(taskId)) {
         hopState.skippedIds.push(taskId);
       }
+      spinCompassNeedle();
       resetHopSprintRing(hopState.sessionRunning);
       renderApp();
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+    // --- Heavy Crimson "CLEARED" Ink-Stamp Slam + Micro-Shake + Taiko Sound ---
+    function slamInkStampOnElement(containerEl) {
+      const existing = containerEl.querySelector('.cleared-ink-stamp');
+      if (existing) existing.remove();
+
+      const stamp = document.createElement('div');
+      stamp.className = 'cleared-ink-stamp text-xl sm:text-2xl';
+      stamp.innerHTML = `CLEARED <span class="text-xs tracking-normal ml-1">DON!!</span>`;
+      containerEl.appendChild(stamp);
+    }
+
+    function triggerDonMicroShake() {
+      const stage = document.getElementById('main-stage');
+      if (!stage) return;
+      stage.classList.remove('don-shake');
+      void stage.offsetWidth;
+      stage.classList.add('don-shake');
+    }
+
+    function playTaikoDonSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        // 1. Deep Percussive Taiko Drum "DON!!" Thump
+        const drumOsc = ctx.createOscillator();
+        const drumGain = ctx.createGain();
+        drumOsc.type = 'triangle';
+        drumOsc.frequency.setValueAtTime(155, now);
+        drumOsc.frequency.exponentialRampToValueAtTime(46, now + 0.16);
+
+        drumGain.gain.setValueAtTime(0.001, now);
+        drumGain.gain.linearRampToValueAtTime(0.28, now + 0.012);
+        drumGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+        drumOsc.connect(drumGain);
+        drumGain.connect(ctx.destination);
+        drumOsc.start(now);
+        drumOsc.stop(now + 0.34);
+
+        // 2. Crisp Brass/Chime Accent
+        [587.33, 880].forEach((freq, i) => {
+          const chimeOsc = ctx.createOscillator();
+          const chimeGain = ctx.createGain();
+          chimeOsc.type = 'sine';
+          chimeOsc.frequency.setValueAtTime(freq, now + 0.04 + i * 0.05);
+          chimeGain.gain.setValueAtTime(0.001, now + 0.04 + i * 0.05);
+          chimeGain.gain.exponentialRampToValueAtTime(0.055, now + 0.06 + i * 0.05);
+          chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34 + i * 0.05);
+
+          chimeOsc.connect(chimeGain);
+          chimeGain.connect(ctx.destination);
+          chimeOsc.start(now + 0.04 + i * 0.05);
+          chimeOsc.stop(now + 0.36 + i * 0.05);
+        });
+      } catch (e) {}
     }
 
     // --- Task Actions: Complete, Snooze, Drop, Undo ---
@@ -1368,24 +1587,20 @@
       renderApp();
     }
 
-    function handleCompleteTask(taskId, cardEl, checkBtn, event) {
+    function handleCompleteTask(taskId, cardEl, checkBtn) {
       const idx = appState.tasks.findIndex(t => t.id === taskId);
       if (idx === -1) return;
 
-      saveUndoSnapshot('Nice work! Task completed');
+      saveUndoSnapshot('DON!! TARGET CLEARED');
 
-      // Visual strikethrough + emerald check + micro-confetti
-      checkBtn.classList.add('bg-emerald-500', 'border-emerald-500');
+      // Fill checkbox in Saffron Gold, slam Crimson CLEARED stamp, trigger shake + Taiko DON!!
+      checkBtn.classList.add('bg-saffronGold');
       const svg = checkBtn.querySelector('svg');
-      if (svg) {
-        svg.classList.remove('opacity-0', 'text-emerald-600', 'dark:text-emerald-400');
-        svg.classList.add('text-white', 'opacity-100');
-      }
-      cardEl.classList.add('is-done');
+      if (svg) svg.classList.remove('opacity-0');
 
-      const rect = checkBtn.getBoundingClientRect();
-      triggerConfettiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      playGentleChime();
+      slamInkStampOnElement(cardEl);
+      triggerDonMicroShake();
+      playTaikoDonSound();
 
       const completedTask = appState.tasks[idx];
       appState.completedWins.unshift({
@@ -1396,25 +1611,24 @@
       });
 
       setTimeout(() => {
-        cardEl.classList.add('task-card-completing');
-      }, 180);
+        cardEl.classList.add('task-card-exit');
+      }, 280);
 
       setTimeout(() => {
         appState.tasks = appState.tasks.filter(t => t.id !== taskId);
         saveState();
         renderApp();
-      }, 460);
+      }, 520);
     }
 
     function handleSnoozeTask(taskId) {
       const task = appState.tasks.find(t => t.id === taskId);
       if (!task) return;
 
-      saveUndoSnapshot('Snoozed — resets in a few days');
-      // Reset aging clock to virtual now and lower base score temporarily so next item promotes
+      saveUndoSnapshot('SNOOZED 3 DAYS • CLOCK RESET');
       task.last_interacted_at = getVirtualNowMs();
       task.base_urgency_score = Math.min(task.base_urgency_score, 32);
-      task.context = 'Snoozed • Re-surfaces later';
+      task.context = 'Snoozed 3d • Held safely';
       saveState();
       renderApp();
     }
@@ -1423,96 +1637,19 @@
       const exists = appState.tasks.some(t => t.id === taskId);
       if (!exists) return;
 
-      saveUndoSnapshot('Let go — removed cleanly');
+      saveUndoSnapshot('DROPPED CLEANLY • ZERO GUILT');
       appState.tasks = appState.tasks.filter(t => t.id !== taskId);
       saveState();
       renderApp();
     }
 
-    // --- Subtle Celebratory Confetti & Optional Soft Web Audio Chime ---
-    function triggerConfettiBurst(originX, originY) {
-      const canvas = document.getElementById('confetti-canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      const colors = ['#10B981', '#4F46E5', '#F59E0B', '#34D399', '#818CF8'];
-      const particles = Array.from({ length: 28 }, () => {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2.5 + Math.random() * 5.5;
-        return {
-          x: originX,
-          y: originY,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 2.5,
-          size: 4 + Math.random() * 4,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          alpha: 1,
-          rotation: Math.random() * 360,
-          vRot: (Math.random() - 0.5) * 12
-        };
-      });
-
-      let frame = 0;
-      function animate() {
-        frame++;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let alive = false;
-
-        particles.forEach(p => {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.22; // gentle gravity
-          p.alpha -= 0.024;
-          p.rotation += p.vRot;
-
-          if (p.alpha > 0) {
-            alive = true;
-            ctx.save();
-            ctx.globalAlpha = Math.max(0, p.alpha);
-            ctx.translate(p.x, p.y);
-            ctx.rotate((p.rotation * Math.PI) / 180);
-            ctx.fillStyle = p.color;
-            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
-            ctx.restore();
-          }
-        });
-
-        if (alive && frame < 60) {
-          requestAnimationFrame(animate);
-        } else {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-      }
-      requestAnimationFrame(animate);
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
 
-    function playGentleChime() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const now = ctx.currentTime;
-
-        [523.25, 659.25].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.07);
-          gain.gain.setValueAtTime(0.001, now + idx * 0.07);
-          gain.gain.exponentialRampToValueAtTime(0.06, now + idx * 0.07 + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.28);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + idx * 0.07);
-          osc.stop(now + idx * 0.07 + 0.3);
-        });
-      } catch (e) {
-        // Audio is purely optional enhancement
-      }
-    }
-
-    // --- AI Brain-Dump Triage (Gemini API with Exponential Backoff + Offline Deterministic Fallback) ---
+    // --- AI Brain-Dump Triage (Gemini API + Offline Deterministic Fallback) ---
     async function processBrainDump(transcript) {
       const cleaned = (transcript || '').trim();
       if (!cleaned) return;
@@ -1521,11 +1658,9 @@
       aiPill.classList.remove('hidden');
 
       let extractedTasks = null;
-
       try {
         extractedTasks = await extractTasksViaGemini(cleaned);
       } catch (err) {
-        // Silently fall back to deterministic local parser if offline or API unavailable
         extractedTasks = null;
       }
 
@@ -1566,18 +1701,18 @@
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
       const currentIso = new Date(getVirtualNowMs()).toISOString();
 
-      const systemInstruction = `You are an ADHD executive-function assistant.
+      const systemInstruction = `You are an ADHD executive-function assistant for a teacher.
 Split messy, rambling voice transcripts into clear, atomic, actionable tasks.
 Rules:
 1. Break multi-step thoughts into separate discrete tasks (e.g., speaking with two different students becomes two tasks).
-2. Estimate realistic duration_mins (integer minutes). Quick calls, texts, emails, or forms should be 2 to 5 minutes so they qualify for "Hour of Power" 5-minute sprints.
-3. Score each task from 1 to 10 on three dimensions:
+2. Estimate realistic duration_mins (integer minutes). Quick calls, texts, emails, or forms should be 2 to 5 minutes so they qualify for 5-minute sprints.
+3. Score each task from 1 to 10 on three dimensions (used silently for ranking):
    - emotional_score (1-10): relief from dread, anxiety, guilt, or interpersonal stress.
    - urgency_score (1-10): deadline proximity, time sensitivity, immediate consequences.
    - life_score (1-10): meaningful impact on health, family, finances, safety, or work.
 4. Keep context ultra-short (max 5 words, e.g., "Reported by Mr. Mott • Urgent").
 5. Convert relative times using current reference time ${currentIso} into ISO-8601 due_datetime, or null if no time mentioned.
-6. Assign a short category (e.g., "Student Support", "Communication", "Admin", "Errands", "Deep Work").`;
+6. Assign a short category (e.g., "Student Support", "Communication", "Admin", "Errands").`;
 
       const payload = {
         contents: [{ parts: [{ text: transcript }] }],
@@ -1614,7 +1749,6 @@ Rules:
         }
       };
 
-      // Exponential backoff (1s, 2s, 4s)
       const delays = [1000, 2000, 4000];
       for (let attempt = 0; attempt <= delays.length; attempt++) {
         try {
@@ -1624,18 +1758,13 @@ Rules:
             body: JSON.stringify(payload)
           });
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const result = await response.json();
           const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!rawText) throw new Error('Empty model response');
 
           const parsed = JSON.parse(rawText);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
           throw new Error('Invalid array schema');
         } catch (err) {
           if (attempt === delays.length) throw err;
@@ -1645,15 +1774,10 @@ Rules:
       return null;
     }
 
-    /**
-     * Fast Deterministic Fallback Parser
-     * Handles offline usage or environments without API access gracefully,
-     * generating 3D scores (Emotional, Urgency, Life Impact) and duration_mins.
-     */
     function fallbackDeterministicParser(text) {
       const lower = text.toLowerCase();
 
-      // Detect Mr. Mott / Joe & Teddy incident pattern specifically
+      // Sample 1: Mr. Mott / Joe & Teddy Period 3 altercation
       if (lower.includes('mott') && lower.includes('joe') && lower.includes('teddy')) {
         return [
           {
@@ -1703,10 +1827,7 @@ Rules:
         ];
       }
 
-      // Strip leading "Quick five minute jobs:" prefix if present
       const strippedLead = text.replace(/^quick\s+(five|5)\s+minute\s+jobs\s*:\s*/i, '');
-
-      // General clause splitting on sentences, commas in lists, " and ", " also ", " then "
       const rawClauses = strippedLead
         .split(/[.!?]+|\b(?:and also|and then|also need to|and)\b|,\s*/i)
         .map(s => s.trim())
@@ -1716,7 +1837,6 @@ Rules:
       const isLow = /\b(some point|someday|whenever|later|eventually|no rush)\b/i.test(lower);
       const isQuickHint = /\b(quick|five minute|5 minute|5-min|text|call|reply|pay|approve|order|book|email)\b/i.test(lower);
 
-      // Extract simple clock time like "4pm" or "3:30 pm"
       let extractedDueIso = null;
       const timeMatch = lower.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
       if (timeMatch) {
@@ -1734,35 +1854,26 @@ Rules:
         extractedDueIso = dueDate.toISOString();
       }
 
-      return rawClauses.map((clause) => {
+      return rawClauses.map(clause => {
         let cleanTitle = clause
           .replace(/^(at some point\s+)?(i\s+)?(should|need to|have to|must|got to|gotta|remind me(\s+today)?(\s+at\s+\d{1,2}(:\d{2})?\s*(am|pm))?\s+to)\s+/i, '')
           .trim();
-
         cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
 
         const clauseQuick = isQuickHint || /\b(text|call|reply|pay|approve|order|email|form)\b/i.test(cleanTitle);
         const duration = clauseQuick ? 4 : 15;
 
-        let eScore = 5;
-        let uScore = 5;
-        let lScore = 5;
-        let ctx = clauseQuick ? `Quick win • ~${duration}m` : 'Voice capture';
+        let eScore = 5, uScore = 5, lScore = 5;
+        let ctx = clauseQuick ? 'Quick 5-min sprint target' : 'Voice capture';
 
         if (isUrgent) {
-          eScore = 8;
-          uScore = 9;
-          lScore = 8;
+          eScore = 8; uScore = 9; lScore = 8;
           ctx = 'Flagged urgent • Today';
         } else if (extractedDueIso) {
-          eScore = 7;
-          uScore = 8;
-          lScore = 7;
+          eScore = 7; uScore = 8; lScore = 7;
           ctx = 'Timed reminder';
         } else if (isLow) {
-          eScore = 2;
-          uScore = 2;
-          lScore = 3;
+          eScore = 2; uScore = 2; lScore = 3;
           ctx = 'Low urgency • Whenever';
         }
 
@@ -1780,7 +1891,7 @@ Rules:
       });
     }
 
-    // --- Continuous Pause-Tolerant Web Speech API Voice Recognition ---
+    // --- Continuous Pause-Tolerant Web Speech API Voice Capture ---
     function setupSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return null;
@@ -1791,10 +1902,10 @@ Rules:
       rec.lang = 'en-US';
 
       rec.onstart = () => {
-        document.getElementById('mic-btn').classList.remove('mic-idle');
-        document.getElementById('mic-btn').classList.add('mic-listening');
+        document.getElementById('mic-btn').classList.remove('voice-cta-idle');
+        document.getElementById('mic-btn').classList.add('voice-cta-listening');
+        document.getElementById('mic-cta-text').textContent = 'LISTENING';
         document.getElementById('live-transcript-box').classList.remove('hidden');
-        document.getElementById('mic-helper-label').textContent = 'Listening continuously — tap Done & Sort when ready';
       };
 
       rec.onresult = (event) => {
@@ -1808,14 +1919,12 @@ Rules:
             sessionInterim += piece;
           }
         }
-        // Keep session results cleanly appended to any prior segments before a browser pause-restart
         interimTranscriptBuffer = (sessionFinal + sessionInterim).trim();
         const combinedDisplay = [finalTranscriptBuffer, interimTranscriptBuffer].filter(Boolean).join(' ');
         document.getElementById('live-transcript-text').textContent = combinedDisplay || 'Listening... speak naturally';
       };
 
       rec.onerror = (event) => {
-        // Ignore 'no-speech' or 'aborted' during natural thinking pauses so we don't drop out
         if (event.error === 'no-speech' || event.error === 'aborted') {
           return;
         }
@@ -1825,20 +1934,17 @@ Rules:
       };
 
       rec.onend = () => {
-        // Commit any interim/session text into the persistent buffer across browser pause cutoffs
         if (interimTranscriptBuffer) {
           finalTranscriptBuffer = [finalTranscriptBuffer, interimTranscriptBuffer].filter(Boolean).join(' ').trim();
           interimTranscriptBuffer = '';
         }
 
-        // If user has NOT tapped "Done & Sort" or "Cancel", seamlessly restart recognition!
         if (isListening) {
           setTimeout(() => {
             if (!isListening) return;
             try {
               rec.start();
             } catch (e) {
-              // Retry once more if browser engine is still resetting
               setTimeout(() => {
                 if (isListening) {
                   try { rec.start(); } catch (err) {}
@@ -1869,17 +1975,15 @@ Rules:
 
       try {
         recognition.start();
-      } catch (e) {
-        // Already started
-      }
+      } catch (e) {}
     }
 
     function stopListening(shouldProcess = true) {
       isListening = false;
-      document.getElementById('mic-btn').classList.add('mic-idle');
-      document.getElementById('mic-btn').classList.remove('mic-listening');
+      document.getElementById('mic-btn').classList.add('voice-cta-idle');
+      document.getElementById('mic-btn').classList.remove('voice-cta-listening');
+      document.getElementById('mic-cta-text').textContent = 'VOICE DUMP';
       document.getElementById('live-transcript-box').classList.add('hidden');
-      document.getElementById('mic-helper-label').textContent = 'Tap mic to dump thoughts — AI handles the sorting';
 
       const fullTranscript = [finalTranscriptBuffer, interimTranscriptBuffer].filter(Boolean).join(' ').trim();
       finalTranscriptBuffer = '';
@@ -1896,7 +2000,7 @@ Rules:
       }
     }
 
-    // --- Weekly Wins Modal Renderer ---
+    // --- Weekly Arc Celebration Modal ---
     function openWeeklyWinsModal() {
       const modal = document.getElementById('wins-modal');
       const totalEl = document.getElementById('wins-total-number');
@@ -1908,14 +2012,13 @@ Rules:
       totalEl.textContent = wins.length;
 
       if (wins.length >= 5) {
-        encEl.textContent = 'Incredible momentum! You stayed focused on what mattered without drowning in a giant list.';
+        encEl.textContent = 'Heavyweight momentum! You locked onto what mattered and cleared the deck without list paralysis.';
       } else if (wins.length > 0) {
-        encEl.textContent = 'Every single checkbox ticked is real cognitive load lifted off your mind.';
+        encEl.textContent = 'Every cleared target takes real weight off your mind. Zero guilt for anything still in the hold.';
       } else {
-        encEl.textContent = 'Your week is a fresh slate. Tick off your first focus item whenever you are ready.';
+        encEl.textContent = 'Fresh horizon. Tick off your first target whenever you are ready.';
       }
 
-      // Tally categories
       const categoryCounts = {};
       wins.forEach(w => {
         const cat = w.category || 'General Focus';
@@ -1925,29 +2028,26 @@ Rules:
       themesEl.innerHTML = '';
       const entries = Object.entries(categoryCounts);
       if (entries.length === 0) {
-        themesEl.innerHTML = '<span class="text-xs text-slate-400">Your focus themes will appear here as you tick off tasks.</span>';
+        themesEl.innerHTML = '<span class="text-xs font-bold text-stone-500">Sectors will appear here as you clear targets.</span>';
       } else {
         entries.forEach(([cat, count]) => {
           const badge = document.createElement('span');
-          badge.className = 'px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-200 text-xs font-medium';
+          badge.className = 'px-2.5 py-1 rounded-lg bg-[#FFFDF9] dark:bg-slate-800 border-2 border-charcoalInk dark:border-parchment font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment';
           badge.textContent = `${cat} (${count})`;
           themesEl.appendChild(badge);
         });
       }
 
-      // Recent completed wins (no missed/overdue stats ever shown)
       recentEl.innerHTML = '';
       if (wins.length === 0) {
-        recentEl.innerHTML = '<li class="text-xs text-slate-400 py-2">No tasks checked off yet.</li>';
+        recentEl.innerHTML = '<li class="text-xs font-bold text-stone-500 py-2">No targets cleared yet.</li>';
       } else {
         wins.slice(0, 8).forEach(w => {
           const li = document.createElement('li');
-          li.className = 'flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70 rounded-xl px-3 py-2';
+          li.className = 'flex items-center gap-2 text-xs font-bold text-charcoalInk dark:text-parchment bg-[#FFFDF9] dark:bg-slate-800 border-2 border-charcoalInk/70 rounded-xl px-3 py-2';
           li.innerHTML = `
-            <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span class="truncate font-medium">${escapeHtml(w.title)}</span>
+            <span class="px-1.5 py-0.5 rounded bg-crimsonFlag text-white font-display text-[10px] uppercase">DON!!</span>
+            <span class="truncate">${escapeHtml(w.title)}</span>
           `;
           recentEl.appendChild(li);
         });
@@ -1968,7 +2068,17 @@ Rules:
       loadState();
       renderApp();
 
-      // Microphone toggle
+      // Check PWA shortcut query params (?action=voice or ?mode=power)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'power') {
+        hopState.active = true;
+        resetHopSprintRing(false);
+        renderApp();
+      } else if (params.get('action') === 'voice') {
+        startListening();
+      }
+
+      // Center Oversized Voice Dump Button
       document.getElementById('mic-btn').addEventListener('click', () => {
         if (isListening) {
           stopListening(true);
@@ -1977,26 +2087,20 @@ Rules:
         }
       });
 
-      document.getElementById('stop-mic-early-btn').addEventListener('click', () => {
-        stopListening(true);
-      });
+      document.getElementById('stop-mic-early-btn').addEventListener('click', () => stopListening(true));
+      document.getElementById('cancel-mic-btn').addEventListener('click', () => stopListening(false));
 
-      document.getElementById('cancel-mic-btn').addEventListener('click', () => {
-        stopListening(false);
-      });
-
-      // Hour of Power Mode Controls
+      // Left Thumb Control: LOG POSE Mode
       document.getElementById('toggle-hop-btn').addEventListener('click', () => {
         hopState.active = !hopState.active;
         if (hopState.active) {
+          spinCompassNeedle();
           resetHopSprintRing(false);
         }
         renderApp();
       });
 
-      document.getElementById('hop-timer-toggle-btn').addEventListener('click', () => {
-        toggleHopSessionTimer(false);
-      });
+      document.getElementById('hop-timer-toggle-btn').addEventListener('click', () => toggleHopSessionTimer(false));
 
       document.getElementById('hop-timer-reset-btn').addEventListener('click', () => {
         hopState.sessionRunning = false;
@@ -2024,7 +2128,7 @@ Rules:
         renderApp();
       });
 
-      // Text / Sample Brain-Dump Drawer
+      // Right Thumb Control: TYPE / TEST Drawer
       document.getElementById('open-text-drawer-btn').addEventListener('click', () => {
         const drawer = document.getElementById('text-dump-drawer');
         drawer.classList.toggle('hidden');
@@ -2037,7 +2141,6 @@ Rules:
         document.getElementById('text-dump-drawer').classList.add('hidden');
       });
 
-      // 1-Click Sample Voice-Dump Buttons
       document.querySelectorAll('.sample-dump-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const sampleText = btn.getAttribute('data-sample');
@@ -2046,7 +2149,6 @@ Rules:
         });
       });
 
-      // Manual Text Dump Submit
       document.getElementById('text-dump-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const input = document.getElementById('text-dump-input');
@@ -2057,19 +2159,31 @@ Rules:
         await processBrainDump(val);
       });
 
-      // Undo Toast Button
+      // Undo Toast
       document.getElementById('undo-action-btn').addEventListener('click', handleUndo);
 
-      // Theme Toggle
+      // Day Parchment / Deep Sea Ink Toggle
       document.getElementById('theme-toggle-btn').addEventListener('click', () => {
         appState.darkMode = !appState.darkMode;
         saveState();
         applyTheme();
       });
 
-      // Time Simulation Drawer Controls
-      document.getElementById('toggle-time-sim-btn').addEventListener('click', () => {
-        document.getElementById('time-sim-drawer').classList.toggle('hidden');
+      // Subtle Gear Popover (Houses 5-Day Stagnation Time Sim & Demo Reset)
+      const gearPopover = document.getElementById('gear-popover');
+      document.getElementById('gear-menu-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        gearPopover.classList.toggle('hidden');
+      });
+
+      document.getElementById('close-gear-btn').addEventListener('click', () => {
+        gearPopover.classList.add('hidden');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!gearPopover.contains(e.target) && e.target.id !== 'gear-menu-btn') {
+          gearPopover.classList.add('hidden');
+        }
       });
 
       document.getElementById('sim-plus-1d').addEventListener('click', () => {
@@ -2085,14 +2199,15 @@ Rules:
       });
 
       document.getElementById('sim-reset-btn').addEventListener('click', () => {
-        appState.simDayOffset = 0;
-        appState.dismissedReminders = [];
+        const keepDark = appState.darkMode;
         appState = createSeedState();
+        appState.darkMode = keepDark;
+        gearPopover.classList.add('hidden');
         saveState();
         renderApp();
       });
 
-      // Dismiss Front-of-Mind Reminder Banner
+      // Dismiss Reminder Banner
       document.getElementById('dismiss-reminder-btn').addEventListener('click', () => {
         const banner = document.getElementById('reminder-banner');
         const key = banner.dataset.reminderKey;
@@ -2103,7 +2218,7 @@ Rules:
         banner.classList.add('hidden');
       });
 
-      // Weekly Wins Modal
+      // Weekly Arc Modal
       document.getElementById('open-wins-btn').addEventListener('click', openWeeklyWinsModal);
       document.getElementById('close-wins-modal-btn').addEventListener('click', closeWeeklyWinsModal);
       document.getElementById('celebrate-more-btn').addEventListener('click', closeWeeklyWinsModal);
@@ -2130,7 +2245,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localh
   function show() {
     if (box) { box.style.display = 'flex'; return; }
     box = document.createElement('div');
-    box.style.cssText = 'position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147483000;display:flex;align-items:center;border-radius:26px;background:#4f46e5;color:#ffffff;box-shadow:0 4px 16px rgba(0,0,0,.35);font:600 15px system-ui,sans-serif';
+    box.style.cssText = 'position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147483000;display:flex;align-items:center;border-radius:26px;background:#F7F2E7;color:#111111;box-shadow:0 4px 16px rgba(0,0,0,.35);font:600 15px system-ui,sans-serif';
     var go = document.createElement('button'); go.type = 'button'; go.textContent = 'Install app';
     go.style.cssText = 'border:0;background:none;color:inherit;font:inherit;padding:0 6px 0 18px;min-height:48px;cursor:pointer';
     var x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Hide install button');
