@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>FOCUS FIVE — Log Pose Task Triage</title>
 
   <!-- PWA Manifest & Icons -->
@@ -11,8 +11,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="FocusFive" />
-  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
-  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-180.png" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,7 +23,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Oswald:wght@600;700&display=swap" rel="stylesheet" />
 
   <script>
-    tailwind.config = {
+    if (window.tailwind) tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
@@ -55,6 +55,9 @@
       --border-ink: #1C1917;
       --shadow-ink: #1C1917;
     }
+
+    html { touch-action: manipulation; }
+    #text-dump-input { font-size: 16px; }
 
     html.dark {
       --bg-canvas: #111827;
@@ -906,7 +909,12 @@
 
     const STORAGE_KEY = 'focusfive_grandline_v1';
     const DAY_MS = 24 * 60 * 60 * 1000;
-    const apiKey = ""; // Runtime-provided API key
+    // Optional BYOK Gemini key: read from localStorage only, never hard-coded (public repo).
+    const GEMINI_KEY_STORAGE = 'focusfive_gemini_key';
+    const GEMINI_MODEL = 'gemini-3-flash-preview';
+    function getGeminiKey() {
+      try { return (localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim(); } catch (e) { return ''; }
+    }
 
     let appState = {
       tasks: [],
@@ -1095,18 +1103,32 @@
       };
     }
 
+    function createEmptyState() {
+      return { tasks: [], completedWins: [], simDayOffset: 0, darkMode: false, dismissedReminders: [] };
+    }
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.tasks)) {
-            appState = { ...createSeedState(), ...parsed };
+            appState = { ...createEmptyState(), ...parsed };
+            // The drift simulator is a test tool: never carry it across reloads.
+            appState.simDayOffset = 0;
+            // Repair timestamps older builds wrote in "simulated future" time.
+            const now = Date.now();
+            appState.tasks.forEach(t => {
+              if (t.created_at > now) t.created_at = now;
+              if (t.last_interacted_at > now) t.last_interacted_at = now;
+            });
+            appState.completedWins.forEach(w => { if (w.completed_at > now) w.completed_at = now; });
             return;
           }
         }
       } catch (e) {}
-      appState = createSeedState();
+      // First launch: start clean. Demo tasks are opt-in from the gear menu.
+      appState = createEmptyState();
       saveState();
     }
 
@@ -1447,10 +1469,12 @@
 
     function handleHopCompleteCurrent() {
       const card = document.getElementById('hop-active-card');
+      if (card.dataset.clearing === '1') return;
       const taskId = card.dataset.taskId;
       const idx = appState.tasks.findIndex(t => t.id === taskId);
       if (idx === -1) return;
 
+      card.dataset.clearing = '1';
       saveUndoSnapshot('DON!! TARGET CLEARED');
       slamInkStampOnElement(card);
       triggerDonMicroShake();
@@ -1462,7 +1486,7 @@
         id: 'win_' + Date.now(),
         title: completedTask.title,
         category: completedTask.category || 'Log Pose Sprint',
-        completed_at: getVirtualNowMs()
+        completed_at: Date.now()
       });
 
       hopState.sessionWins += 1;
@@ -1472,6 +1496,9 @@
       }
 
       setTimeout(() => {
+        delete card.dataset.clearing;
+        const stamp = card.querySelector('.cleared-ink-stamp');
+        if (stamp) stamp.remove();
         appState.tasks = appState.tasks.filter(t => t.id !== taskId);
         resetHopSprintRing(true);
         saveState();
@@ -1509,11 +1536,19 @@
       stage.classList.add('don-shake');
     }
 
+    let sharedAudioCtx = null;
+    function getAudioCtx() {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!sharedAudioCtx) sharedAudioCtx = new AudioCtx();
+      if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume().catch(() => {});
+      return sharedAudioCtx;
+    }
+
     function playTaikoDonSound() {
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
+        const ctx = getAudioCtx();
+        if (!ctx) return;
         const now = ctx.currentTime;
 
         // 1. Deep Percussive Taiko Drum "DON!!" Thump
@@ -1588,8 +1623,10 @@
     }
 
     function handleCompleteTask(taskId, cardEl, checkBtn) {
+      if (cardEl.dataset.clearing === '1') return;
       const idx = appState.tasks.findIndex(t => t.id === taskId);
       if (idx === -1) return;
+      cardEl.dataset.clearing = '1';
 
       saveUndoSnapshot('DON!! TARGET CLEARED');
 
@@ -1607,7 +1644,7 @@
         id: 'win_' + Date.now(),
         title: completedTask.title,
         category: completedTask.category || 'General Focus',
-        completed_at: getVirtualNowMs()
+        completed_at: Date.now()
       });
 
       setTimeout(() => {
@@ -1626,6 +1663,7 @@
       if (!task) return;
 
       saveUndoSnapshot('SNOOZED 3 DAYS • CLOCK RESET');
+      // Virtual now so the snooze resets drift inside a simulation too; clamped back on reload.
       task.last_interacted_at = getVirtualNowMs();
       task.base_urgency_score = Math.min(task.base_urgency_score, 32);
       task.context = 'Snoozed 3d • Held safely';
@@ -1668,7 +1706,7 @@
         extractedTasks = fallbackDeterministicParser(cleaned);
       }
 
-      const virtualNow = getVirtualNowMs();
+      const createdAt = Date.now();
       extractedTasks.forEach((item, index) => {
         const eScore = Math.min(10, Math.max(1, Number(item.emotional_score) || 5));
         const uScore = Math.min(10, Math.max(1, Number(item.urgency_score) || 5));
@@ -1687,8 +1725,8 @@
           base_urgency_score: computedBase,
           due_datetime: item.due_datetime || null,
           needs_urgent_nudge: Boolean(item.needs_urgent_nudge),
-          created_at: virtualNow,
-          last_interacted_at: virtualNow
+          created_at: createdAt,
+          last_interacted_at: createdAt
         });
       });
 
@@ -1698,8 +1736,12 @@
     }
 
     async function extractTasksViaGemini(transcript) {
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-      const currentIso = new Date(getVirtualNowMs()).toISOString();
+      // No key (default) or no signal: go straight to the on-device parser. Zero network, zero wait.
+      const key = getGeminiKey();
+      if (!key || navigator.onLine === false) return null;
+
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+      const currentIso = new Date().toISOString();
 
       const systemInstruction = `You are an ADHD executive-function assistant for a teacher.
 Split messy, rambling voice transcripts into clear, atomic, actionable tasks.
@@ -1749,16 +1791,25 @@ Rules:
         }
       };
 
-      const delays = [1000, 2000, 4000];
+      // One retry, only for rate-limit / server errors. Bad key (4xx) falls back immediately.
+      const delays = [1200];
       for (let attempt = 0; attempt <= delays.length; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
         try {
           const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+            body: JSON.stringify(payload),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
 
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          if (!response.ok) {
+            const retryable = response.status === 429 || response.status >= 500;
+            if (!retryable) return null;
+            throw new Error(`HTTP ${response.status}`);
+          }
           const result = await response.json();
           const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!rawText) throw new Error('Empty model response');
@@ -1767,7 +1818,8 @@ Rules:
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
           throw new Error('Invalid array schema');
         } catch (err) {
-          if (attempt === delays.length) throw err;
+          clearTimeout(timeoutId);
+          if (attempt === delays.length) return null;
           await new Promise(res => setTimeout(res, delays[attempt]));
         }
       }
@@ -1827,68 +1879,106 @@ Rules:
         ];
       }
 
-      const strippedLead = text.replace(/^quick\s+(five|5)\s+minute\s+jobs\s*:\s*/i, '');
-      const rawClauses = strippedLead
-        .split(/[.!?]+|\b(?:and also|and then|also need to|and)\b|,\s*/i)
-        .map(s => s.trim())
-        .filter(s => s.length > 3);
+      return splitBrainDumpIntoTasks(text);
+    }
 
-      const isUrgent = /\b(urgent|urgently|asap|immediately|right now|critical|emergency|overdue)\b/i.test(lower);
-      const isLow = /\b(some point|someday|whenever|later|eventually|no rush)\b/i.test(lower);
-      const isQuickHint = /\b(quick|five minute|5 minute|5-min|text|call|reply|pay|approve|order|book|email)\b/i.test(lower);
+    // --- Offline parser helpers ---
+    // A new task starts only where a clause opens with an action or intent ("call", "need to"...).
+    // So "Speak with Liam and Noah" stays one task, but "email Sarah and mark essays" splits in two.
+    const ACTION_VERBS = 'call|ring|phone|text|message|msg|email|e-mail|reply|respond|pay|book|order|buy|get|grab|pick|drop|send|post|mark|grade|prep|prepare|plan|print|photocopy|submit|fill|sign|approve|speak|talk|chat|meet|see|check|finish|start|write|draft|update|review|read|return|collect|organise|organize|sort|fix|renew|cancel|schedule|reschedule|follow|chase|ask|tell|remind|contact|clean|tidy|upload|download|find|look|confirm|arrange|set|make|do|go|visit|record|enter|log|issue|report|put|take|bring|move|change|add|clear|hand|give|let|research|watch|apply|register|enrol|enroll|pack|wash|cook|feed|walk';
+    const INTENT_PREFIX = String.raw`(?:(?:at some point|today|tomorrow|later|also|then|and|so|plus|oh|ok|okay|um|uh)\s*,?\s+)*(?:(?:i|we)(?:'ll| will)?\s+)?(?:(?:really\s+)?(?:need|have|got|want)\s+to\b|should\b|must\b|gotta\b|gonna\b|remind me(?:\s+\S+){0,4}?\s+to\b|don'?t forget(?: to\b)?|make sure (?:i |to |that i )?|remember to\b)\s*`;
+    const INTENT_RE = new RegExp('^' + INTENT_PREFIX, 'i');
+    const CONNECTOR_RE = /^(?:(?:and then|and also|and|then|also|plus|so|oh|ok|okay|um|uh)\s*,?\s+)+/i;
+    const ACTION_START_RE = new RegExp('^(?:' + INTENT_PREFIX + '|(?:' + ACTION_VERBS + ')\\b)', 'i');
 
-      let extractedDueIso = null;
-      const timeMatch = lower.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
-      if (timeMatch) {
-        let hours = parseInt(timeMatch[1], 10);
-        const mins = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
-        const meridiem = timeMatch[3];
-        if (meridiem === 'pm' && hours < 12) hours += 12;
-        if (meridiem === 'am' && hours === 12) hours = 0;
+    const URGENT_RE = /\b(urgent|urgently|asap|immediately|right now|right away|critical|emergency|overdue)\b/i;
+    const LOW_RE = /\b(some point|someday|whenever|eventually|no rush|at some stage)\b/i;
+    const QUICK_RE = /\b(quick|quickly|five minute|5 minute|5-min|5 min|text|call|ring|reply|pay|approve|order|book|email|e-mail|message|sign|confirm|form)\b/i;
 
-        const dueDate = new Date(getVirtualNowMs());
-        dueDate.setHours(hours, mins, 0, 0);
-        if (dueDate.getTime() < getVirtualNowMs()) {
-          dueDate.setDate(dueDate.getDate() + 1);
-        }
-        extractedDueIso = dueDate.toISOString();
+    function parseClauseDue(clause) {
+      const m = clause.toLowerCase().match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
+      if (!m) return null;
+      let hours = parseInt(m[1], 10);
+      const mins = m[2] ? parseInt(m[2], 10) : 0;
+      if (hours > 12 || mins > 59) return null;
+      if (m[3] === 'pm' && hours < 12) hours += 12;
+      if (m[3] === 'am' && hours === 12) hours = 0;
+      const now = Date.now();
+      const due = new Date(now);
+      due.setHours(hours, mins, 0, 0);
+      if (/\btomorrow\b/i.test(clause)) {
+        due.setDate(due.getDate() + 1);
+      } else if (due.getTime() < now) {
+        due.setDate(due.getDate() + 1);
       }
+      return due.toISOString();
+    }
 
-      return rawClauses.map(clause => {
-        let cleanTitle = clause
-          .replace(/^(at some point\s+)?(i\s+)?(should|need to|have to|must|got to|gotta|remind me(\s+today)?(\s+at\s+\d{1,2}(:\d{2})?\s*(am|pm))?\s+to)\s+/i, '')
-          .trim();
-        cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+    function splitBrainDumpIntoTasks(text) {
+      let body = text.trim();
+      // Dump-level headers apply to every task: "Quick five minute jobs: ..." / "Urgent: ..."
+      const allQuick = /^quick\s+(?:five|5)[\s-]+minute\s+jobs?\s*[:,-]?\s*/i.test(body);
+      body = body.replace(/^quick\s+(?:five|5)[\s-]+minute\s+jobs?\s*[:,-]?\s*/i, '');
+      const allUrgent = /^(?:urgent|asap)\s*[:,-]\s*/i.test(body);
+      body = body.replace(/^(?:urgent|asap)\s*[:,-]\s*/i, '');
 
-        const clauseQuick = isQuickHint || /\b(text|call|reply|pay|approve|order|email|form)\b/i.test(cleanTitle);
-        const duration = clauseQuick ? 4 : 15;
-
-        let eScore = 5, uScore = 5, lScore = 5;
-        let ctx = clauseQuick ? 'Quick 5-min sprint target' : 'Voice capture';
-
-        if (isUrgent) {
-          eScore = 8; uScore = 9; lScore = 8;
-          ctx = 'Flagged urgent • Today';
-        } else if (extractedDueIso) {
-          eScore = 7; uScore = 8; lScore = 7;
-          ctx = 'Timed reminder';
-        } else if (isLow) {
-          eScore = 2; uScore = 2; lScore = 3;
-          ctx = 'Low urgency • Whenever';
+      const clauses = [];
+      body.split(/[.!?;\n]+/).forEach(sentence => {
+        const parts = sentence.split(/(\s*,\s*|\s+(?:and then|and also|and|then|also|plus)\s+)/i);
+        let current = parts[0] || '';
+        for (let i = 1; i < parts.length; i += 2) {
+          const sep = parts[i];
+          const seg = parts[i + 1] || '';
+          const segCore = seg.replace(CONNECTOR_RE, '');
+          // Capitalised mid-sentence word = probably a name ("Sarah and Mark"), not the verb "mark".
+          const looksLikeName = /^[A-Z]/.test(segCore) && !/^I\b/.test(segCore);
+          if (ACTION_START_RE.test(segCore) && !looksLikeName && current.trim()) {
+            clauses.push(current);
+            current = segCore;
+          } else {
+            current += sep + seg;
+          }
         }
-
-        return {
-          title: cleanTitle,
-          context: ctx,
-          category: isLow ? 'Admin' : (clauseQuick ? 'Quick Errands' : 'General Focus'),
-          duration_mins: duration,
-          emotional_score: eScore,
-          urgency_score: uScore,
-          life_score: lScore,
-          due_datetime: extractedDueIso,
-          needs_urgent_nudge: isUrgent
-        };
+        clauses.push(current);
       });
+
+      return clauses
+        .map(c => c.trim().replace(CONNECTOR_RE, '').replace(/(?:[,\s]+(?:and then|and also|and|then|also|plus|so))+[,\s]*$/i, '').trim())
+        .filter(c => c.replace(/[^a-z0-9]/gi, '').length > 3)
+        .map(clause => {
+          let title = clause.replace(INTENT_RE, '').replace(/[,\s]+$/, '').trim() || clause;
+          title = title.charAt(0).toUpperCase() + title.slice(1);
+
+          const due = parseClauseDue(clause);
+          const urgent = allUrgent || URGENT_RE.test(clause);
+          const low = !urgent && LOW_RE.test(clause);
+          const quick = allQuick || QUICK_RE.test(clause);
+
+          let eScore = 5, uScore = 5, lScore = 5;
+          let ctx = quick ? 'Quick 5-min sprint target' : 'Voice capture';
+          if (urgent) {
+            eScore = 8; uScore = 9; lScore = 8;
+            ctx = 'Flagged urgent • Today';
+          } else if (due) {
+            eScore = 7; uScore = 8; lScore = 7;
+            ctx = 'Timed reminder';
+          } else if (low) {
+            eScore = 2; uScore = 2; lScore = 3;
+            ctx = 'Low urgency • Whenever';
+          }
+
+          return {
+            title,
+            context: ctx,
+            category: low ? 'Admin' : (quick ? 'Quick Errands' : 'General Focus'),
+            duration_mins: quick ? 4 : 15,
+            emotional_score: eScore,
+            urgency_score: uScore,
+            life_score: lScore,
+            due_datetime: due,
+            needs_urgent_nudge: urgent
+          };
+        });
     }
 
     // --- Continuous Pause-Tolerant Web Speech API Voice Capture ---
@@ -1899,7 +1989,7 @@ Rules:
       const rec = new SpeechRecognition();
       rec.continuous = true;
       rec.interimResults = true;
-      rec.lang = 'en-US';
+      rec.lang = navigator.language || 'en-AU';
 
       rec.onstart = () => {
         document.getElementById('mic-btn').classList.remove('voice-cta-idle');
@@ -2199,6 +2289,11 @@ Rules:
       });
 
       document.getElementById('sim-reset-btn').addEventListener('click', () => {
+        const hasRealData = appState.tasks.some(t => !String(t.id).startsWith('tsk_seed_'))
+          || appState.completedWins.some(w => !/^win_[123]$/.test(String(w.id)));
+        if (hasRealData && !window.confirm('Replace ALL your tasks and wins with demo data? This cannot be undone.')) {
+          return;
+        }
         const keepDark = appState.darkMode;
         appState = createSeedState();
         appState.darkMode = keepDark;
