@@ -3,7 +3,7 @@
 //   but never wait long on a weak signal.
 // - Tailwind + Google Fonts: cached so the app keeps its styling offline.
 // - Gemini API calls are never touched.
-const CACHE = 'focusfive-v3';
+const CACHE = 'focusfive-v4';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 const CDN_PRECACHE = [
   'https://cdn.tailwindcss.com',
