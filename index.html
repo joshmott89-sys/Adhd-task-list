@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="FocusFive" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
   <link rel="apple-touch-icon" href="./icon-180.png" />
 
@@ -360,16 +361,48 @@
         <!-- Hidden Simulator & Demo Controls Popover -->
         <div
           id="gear-popover"
-          class="hidden absolute right-0 mt-2 w-72 rounded-2xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel p-4 z-50"
+          class="hidden absolute right-0 mt-2 w-72 max-h-[78vh] overflow-y-auto rounded-2xl bg-[#FFFDF9] dark:bg-slate-800 manga-panel p-4 z-50"
         >
           <div class="flex items-center justify-between pb-2 mb-2.5 border-b-2 border-stone-200 dark:border-slate-700">
             <span class="font-display text-sm font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment">
-              5-Day Stagnation Clock
+              Settings
             </span>
-            <button id="close-gear-btn" type="button" class="text-xs font-bold text-stone-500 hover:text-charcoalInk dark:hover:text-white px-1.5 py-0.5">
+            <button id="close-gear-btn" aria-label="Close settings" type="button" class="text-xs font-bold text-stone-500 hover:text-charcoalInk dark:hover:text-white px-1.5 py-0.5">
               ✕
             </button>
           </div>
+          <!-- Optional BYOK Gemini key (stored only in this browser's localStorage) -->
+          <div class="pb-3 mb-3 border-b-2 border-stone-200 dark:border-slate-700">
+            <label for="gemini-api-key-input" class="block font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment">
+              Smart Triage Key <span class="text-stone-500 dark:text-slate-400">(optional)</span>
+            </label>
+            <p class="text-xs text-stone-600 dark:text-slate-300 leading-relaxed mt-1 mb-2">
+              Optional: leave blank for 100% offline on-device sorting. With a key, your dump text (including any names) is sent to Google Gemini.
+            </p>
+            <input
+              id="gemini-api-key-input"
+              type="password"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="Google AI Studio key"
+              class="w-full rounded-xl border-[2.5px] border-charcoalInk dark:border-parchment bg-parchment dark:bg-slate-900 text-charcoalInk dark:text-parchment px-3 py-2 focus:outline-none focus:ring-2 focus:ring-saffronGold"
+              style="font-size:16px"
+            />
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <button id="gemini-key-save-btn" type="button" class="manga-panel-sm manga-btn py-2 px-3 rounded-xl bg-saffronGold font-display text-xs font-bold uppercase tracking-wider text-charcoalInk">
+                Save Key
+              </button>
+              <button id="gemini-key-clear-btn" type="button" class="manga-panel-sm manga-btn py-2 px-3 rounded-xl bg-parchment dark:bg-slate-700 font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment">
+                Clear
+              </button>
+            </div>
+            <p id="gemini-key-status" class="text-[11px] font-bold mt-2 text-stone-500 dark:text-slate-400" aria-live="polite"></p>
+          </div>
+
+          <p class="font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment mb-1">
+            5-Day Drift Tester
+          </p>
           <p class="text-xs text-stone-600 dark:text-slate-300 leading-relaxed mb-3">
             Tasks untouched for 5 days auto-escalate into your Top 5 as <span class="font-bold text-amber-700 dark:text-amber-300">DRIFTING 5D</span> so nothing gets lost at sea.
           </p>
@@ -911,7 +944,7 @@
     const DAY_MS = 24 * 60 * 60 * 1000;
     // Optional BYOK Gemini key: read from localStorage only, never hard-coded (public repo).
     const GEMINI_KEY_STORAGE = 'focusfive_gemini_key';
-    const GEMINI_MODEL = 'gemini-3-flash-preview';
+    const GEMINI_MODEL = 'gemini-3.5-flash-lite';
     function getGeminiKey() {
       try { return (localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim(); } catch (e) { return ''; }
     }
@@ -949,7 +982,8 @@
     }
 
     function getDaysUnmodified(task) {
-      const refTime = task.last_interacted_at || task.created_at;
+      // Drift restarts when a snooze ends, not when it began.
+      const refTime = Math.max(task.last_interacted_at || task.created_at, task.snoozed_until || 0);
       const elapsedMs = Math.max(0, getVirtualNowMs() - refTime);
       return Math.floor(elapsedMs / DAY_MS);
     }
@@ -961,7 +995,8 @@
       return Math.round((e * 0.35 + u * 0.40 + l * 0.25) * 10);
     }
 
-    function computeEffectiveUrgency(task) {
+    // Uncapped priority: used for ordering, so old tasks don't all tie at 100.
+    function computeRawPriority(task) {
       const days = getDaysUnmodified(task);
       const ageBoost = days * 8;
       const stagnationBonus = days >= 5 ? 30 : 0;
@@ -978,22 +1013,57 @@
       }
 
       const base = task.base_urgency_score || compute3DBaseScore(task.emotional_score, task.urgency_score, task.life_score);
-      return Math.min(100, Math.max(1, Math.round(base + ageBoost + stagnationBonus + dueBoost)));
+      return Math.round(base + ageBoost + stagnationBonus + dueBoost);
+    }
+
+    // Capped 1-100 score: used for the visual tiers only.
+    function computeEffectiveUrgency(task) {
+      return Math.min(100, Math.max(1, computeRawPriority(task)));
+    }
+
+    function isSnoozed(task) {
+      return Boolean(task.snoozed_until) && task.snoozed_until > getVirtualNowMs();
+    }
+
+    function getWeekStartMs() {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // back to Monday
+      return d.getTime();
+    }
+
+    function getThisWeekWins() {
+      const weekStart = getWeekStartMs();
+      return appState.completedWins.filter(w => w.completed_at >= weekStart);
     }
 
     function getRankedActiveTasks() {
-      return [...appState.tasks]
+      return appState.tasks
+        .filter(task => !isSnoozed(task))
         .map(task => ({
           ...task,
           daysUnmodified: getDaysUnmodified(task),
+          raw_priority: computeRawPriority(task),
           effective_urgency_score: computeEffectiveUrgency(task)
         }))
         .sort((a, b) => {
-          if (b.effective_urgency_score !== a.effective_urgency_score) {
-            return b.effective_urgency_score - a.effective_urgency_score;
-          }
+          if (b.raw_priority !== a.raw_priority) return b.raw_priority - a.raw_priority;
           return a.created_at - b.created_at;
         });
+    }
+
+    // Top 5 with at most MAX_DRIFTING_CARDS "DRIFTING" cards, so the deck never becomes a wall of guilt.
+    // Other drifting tasks stay held and surface one by one as these are cleared, snoozed or dropped.
+    const MAX_DRIFTING_CARDS = 2;
+    function pickTopFive(ranked) {
+      const drifting = ranked.filter(t => t.daysUnmodified >= 5);
+      const fresh = ranked.filter(t => t.daysUnmodified < 5);
+      const driftSlots = Math.max(MAX_DRIFTING_CARDS, 5 - fresh.length);
+      const chosen = new Set([...drifting.slice(0, driftSlots), ...fresh.slice(0, 5)].map(t => t.id));
+      // Genuinely urgent, non-drifting tasks stay at the very top; everything else keeps its ranked order.
+      const isHot = t => t.daysUnmodified < 5 && (t.needs_urgent_nudge || t.effective_urgency_score >= 85);
+      const picked = ranked.filter(t => chosen.has(t.id)).slice(0, 5);
+      return [...picked.filter(isHot), ...picked.filter(t => !isHot(t))];
     }
 
     // --- Seed Realistic Teacher Tasks ---
@@ -1121,8 +1191,12 @@
             appState.tasks.forEach(t => {
               if (t.created_at > now) t.created_at = now;
               if (t.last_interacted_at > now) t.last_interacted_at = now;
+              if (t.snoozed_until > now + 3 * DAY_MS) t.snoozed_until = now + 3 * DAY_MS;
             });
             appState.completedWins.forEach(w => { if (w.completed_at > now) w.completed_at = now; });
+            // Keep the wins log from growing forever: 8 weeks is plenty for the Weekly Arc.
+            appState.completedWins = appState.completedWins.filter(w => w.completed_at >= now - 56 * DAY_MS);
+            appState.dismissedReminders = appState.dismissedReminders.slice(-50);
             return;
           }
         }
@@ -1218,7 +1292,7 @@
       applyTheme();
 
       const ranked = getRankedActiveTasks();
-      const topFive = ranked.slice(0, 5);
+      const topFive = pickTopFive(ranked);
 
       const listEl = document.getElementById('top-five-list');
       const subheaderEl = document.getElementById('top-five-subheader');
@@ -1230,10 +1304,10 @@
       const arcBar = document.getElementById('header-arc-bar');
       const simBadge = document.getElementById('sim-day-badge');
 
-      const totalWins = appState.completedWins.length;
+      const totalWins = getThisWeekWins().length;
       winsPill.textContent = totalWins;
       // Fill Saffron Gold Weekly Arc gauge smoothly (caps at 100% around 10 weekly wins)
-      const arcPercent = Math.min(100, Math.max(12, totalWins * 10));
+      const arcPercent = totalWins === 0 ? 0 : Math.min(100, Math.max(12, totalWins * 10));
       arcBar.style.width = `${arcPercent}%`;
 
       if (appState.simDayOffset > 0) {
@@ -1662,11 +1736,10 @@
       const task = appState.tasks.find(t => t.id === taskId);
       if (!task) return;
 
-      saveUndoSnapshot('SNOOZED 3 DAYS • CLOCK RESET');
-      // Virtual now so the snooze resets drift inside a simulation too; clamped back on reload.
+      saveUndoSnapshot('SNOOZED 3 DAYS • HELD SAFELY');
+      // Hide the task for 3 days, then let it come back with its original priority and context.
       task.last_interacted_at = getVirtualNowMs();
-      task.base_urgency_score = Math.min(task.base_urgency_score, 32);
-      task.context = 'Snoozed 3d • Held safely';
+      task.snoozed_until = getVirtualNowMs() + 3 * DAY_MS;
       saveState();
       renderApp();
     }
@@ -2098,7 +2171,7 @@ Rules:
       const recentEl = document.getElementById('wins-recent-list');
       const encEl = document.getElementById('wins-encouragement');
 
-      const wins = appState.completedWins;
+      const wins = getThisWeekWins();
       totalEl.textContent = wins.length;
 
       if (wins.length >= 5) {
@@ -2274,6 +2347,32 @@ Rules:
         if (!gearPopover.contains(e.target) && e.target.id !== 'gear-menu-btn') {
           gearPopover.classList.add('hidden');
         }
+      });
+
+      // Optional BYOK Gemini key
+      const keyInput = document.getElementById('gemini-api-key-input');
+      const keyStatus = document.getElementById('gemini-key-status');
+      function refreshKeyStatus(msg) {
+        keyStatus.textContent = msg || (getGeminiKey()
+          ? 'Key saved on this device. Smart triage is on.'
+          : 'No key. Sorting stays on this device.');
+      }
+      refreshKeyStatus();
+      document.getElementById('gemini-key-save-btn').addEventListener('click', () => {
+        const val = keyInput.value.trim();
+        if (!val) { refreshKeyStatus('Paste a key first, or leave blank to stay offline.'); return; }
+        try {
+          localStorage.setItem(GEMINI_KEY_STORAGE, val);
+          keyInput.value = '';
+          refreshKeyStatus();
+        } catch (e) {
+          refreshKeyStatus('Could not save the key on this device.');
+        }
+      });
+      document.getElementById('gemini-key-clear-btn').addEventListener('click', () => {
+        try { localStorage.removeItem(GEMINI_KEY_STORAGE); } catch (e) {}
+        keyInput.value = '';
+        refreshKeyStatus();
       });
 
       document.getElementById('sim-plus-1d').addEventListener('click', () => {
