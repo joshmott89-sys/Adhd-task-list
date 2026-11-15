@@ -433,6 +433,16 @@
             <p id="user-context-saved" class="hidden text-xs font-bold text-stone-600 dark:text-slate-300 mt-1" aria-live="polite">Saved.</p>
           </div>
 
+          <!-- Install: always available here, even when the browser will not offer it by itself -->
+          <div id="install-section" class="pb-3 mb-3 border-b-2 border-stone-200 dark:border-slate-700">
+            <p class="font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment">Home screen</p>
+            <button id="install-app-btn" type="button" class="mt-2 w-full manga-panel-sm manga-btn min-h-[44px] px-3 rounded-xl bg-saffronGold font-display text-sm font-bold uppercase tracking-wider text-charcoalInk">
+              Install app
+            </button>
+            <p id="install-status" class="hidden text-sm font-bold text-charcoalInk dark:text-parchment mt-2 leading-snug" aria-live="polite"></p>
+            <ol id="install-help" class="hidden mt-2 pl-5 list-decimal space-y-1 text-sm text-charcoalInk dark:text-slate-200 leading-snug marker:font-bold"></ol>
+          </div>
+
           <p class="font-display text-xs font-bold uppercase tracking-wider text-charcoalInk dark:text-parchment mb-1">
             5-Day Drift Tester
           </p>
@@ -2916,6 +2926,61 @@ For each task:
           gearPopover.classList.add('hidden');
         }
       });
+
+      // Install button: uses the browser's install prompt when it offers one, otherwise shows the manual steps
+      (function setupInstallButton() {
+        const section = document.getElementById('install-section');
+        const btn = document.getElementById('install-app-btn');
+        const status = document.getElementById('install-status');
+        const help = document.getElementById('install-help');
+        const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+        if (standalone) { section.classList.add('hidden'); return; }
+
+        let installEvent = null;
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
+        window.addEventListener('appinstalled', () => {
+          installEvent = null;
+          help.classList.add('hidden');
+          status.textContent = 'Installed. Look for FocusFive on your home screen.';
+          status.classList.remove('hidden');
+        });
+
+        function showManualSteps() {
+          const ua = navigator.userAgent;
+          let intro, steps;
+          if (isIosDevice()) {
+            intro = 'On iPhone, add it by hand:';
+            steps = ['Tap the Share button (a square with an arrow pointing up).', 'Scroll down and tap “Add to Home Screen”.', 'Tap “Add”.'];
+          } else if (/Android/i.test(ua)) {
+            intro = 'Your browser is not offering to install right now. Add it by hand:';
+            steps = ['Tap the three dots at the top right.', 'Tap “Add to Home screen”.', 'Tap “Install”. If it only offers “Create shortcut”, choose that. It opens the same app.'];
+          } else {
+            intro = 'Your browser is not offering to install right now.';
+            steps = ['Open the browser menu.', 'Choose “Install” or “Add to Home screen”.'];
+          }
+          status.textContent = intro;
+          status.classList.remove('hidden');
+          help.innerHTML = '';
+          steps.forEach(text => { const li = document.createElement('li'); li.textContent = text; help.appendChild(li); });
+          help.classList.remove('hidden');
+        }
+
+        btn.addEventListener('click', async () => {
+          if (!installEvent) { showManualSteps(); return; }
+          const promptEvent = installEvent;
+          installEvent = null;
+          try {
+            promptEvent.prompt();
+            const choice = await promptEvent.userChoice;
+            if (choice && choice.outcome === 'dismissed') {
+              status.textContent = 'Not installed. Tap Install app again whenever you like.';
+              status.classList.remove('hidden');
+            }
+          } catch (err) {
+            showManualSteps();
+          }
+        });
+      })();
 
       // Voice: settings, guided setup, waiting voice notes
       refreshVoiceSettings();
